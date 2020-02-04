@@ -27,8 +27,8 @@ print("number of ham files: %d" % len(ham_filesList))
 
 
 # choosing only a number of files for quick analysis
-spam_filesList = spam_filesList[:15000]
-ham_filesList  = ham_filesList[:15000]
+spam_filesList = spam_filesList[:10000]
+ham_filesList  = ham_filesList[:10000]
 
 
 # extracting content from spam and ham files
@@ -74,11 +74,20 @@ wordSorted , wordSortedCounts   = wordCount(vocal_all)
 
 
 print("words in spam		words in ham")
-for i in range(10):
+for i in range(50):
 	print('%03d % 20s % 5d    % 20s % 5d' % (i,wordSorted_spam[i],wordSortedCounts_spam[i],wordSorted_ham[i],wordSortedCounts_ham[i])) 
 
 
-print(stop)
+
+set_hamWords = set(wordSorted_ham[:100])
+set_spamWords = set(wordSorted_spam[:100])
+
+print ("number of words in both classes : %d" % len(set_hamWords.union(set_spamWords)))
+print ("number of common words in both classes : %d" % len(set_hamWords.intersection(set_spamWords)))
+print(set_hamWords - set_spamWords)
+print(set_spamWords - set_hamWords)
+
+#print(stop)
 '''
 print("all")
 for i in range(300):
