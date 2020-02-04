@@ -34,7 +34,7 @@ def readFile(files_list):
 		content = content.lower()
 
 		# 2. Splitting the content based on lines,and removing all fields except body and subject
-		special_words = ['message-id:', 'date:', 'from:','sent:', 'to:','cc:','bcc', 'mime-version:', 'content-type:', 'content-transfer-encoding:', 'x-from:', 'x-to:', 'x-cc:', 'x-bcc:', 'x-origin:', 'x-filename:', 'x-priority:', 'x-msmail-priority:', 'x-mimeole:','\tcharset=','smtp','nbsp','nextpart','mime','px','http://','&gt;','href=','src=','size=']
+		special_words = ['message-id:', 'date:', 'from:','sent:', 'to:','cc:','bcc', 'mime-version:', 'content-type:', 'content-transfer-encoding:', 'x-from:', 'x-to:', 'x-cc:', 'x-bcc:', 'x-origin:', 'x-filename:', 'x-priority:', 'x-msmail-priority:', 'x-mimeole:','return-path:','delivered-to:','received:','x-mailer:','thread-index:','content-class:','x-mimeole:','x-originalarrivaltime:','\tcharset=','smtp','nbsp','nextpart','mime','px','http://','&gt;','href=','src=','size=']
 		content = content.split("\n")
 		redundant_lines=[]
 		for word in special_words:
@@ -65,8 +65,8 @@ def readFile(files_list):
 
 
 		#'''
-		cleanedContent	= re.sub(">(.|\n)*?</","",content)
-		cleanedContent	= re.sub("<.*?>","",cleanedContent)
+		#cleanedContent	= re.sub(">(.|\n)*?</","",content)
+		cleanedContent	= re.sub("<.*?>","",content)
 		cleanedContent  = re.sub("&.*?;","",cleanedContent)
 		cleanedContent	= re.sub("=[0-9]*","",cleanedContent)
 		cleanedContent = re.sub(r"(?is)<(script|style).*?>.*?()", "", cleanedContent)
