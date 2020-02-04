@@ -27,8 +27,8 @@ print("number of ham files: %d" % len(ham_filesList))
 
 
 # choosing only a number of files for quick analysis
-spam_filesList = spam_filesList[:10000]
-ham_filesList  = ham_filesList[:10000]
+spam_filesList = spam_filesList[:15000]
+ham_filesList  = ham_filesList[:15000]
 
 
 # extracting content from spam and ham files
@@ -74,20 +74,35 @@ wordSorted , wordSortedCounts   = wordCount(vocal_all)
 
 
 print("words in spam		words in ham")
-for i in range(50):
+for i in range(100):
 	print('%03d % 20s % 5d    % 20s % 5d' % (i,wordSorted_spam[i],wordSortedCounts_spam[i],wordSorted_ham[i],wordSortedCounts_ham[i])) 
 
 
 
-set_hamWords = set(wordSorted_ham[:100])
-set_spamWords = set(wordSorted_spam[:100])
+set_hamWords = set(wordSorted_ham)
+set_spamWords = set(wordSorted_spam)
+set_allWords = set(wordSorted[:100])
 
-print ("number of words in both classes : %d" % len(set_hamWords.union(set_spamWords)))
-print ("number of common words in both classes : %d" % len(set_hamWords.intersection(set_spamWords)))
-print(set_hamWords - set_spamWords)
-print(set_spamWords - set_hamWords)
+# words from our vocab that are only in spam e-mails not ham (distinctive words)
+VocabWordsOnlyInSpam = (set_allWords & set_spamWords) - (set_allWords & set_hamWords)
 
-#print(stop)
+# words from our vocab that are only in ham e-mails not spam (distinctive words)
+VocabWordsOnlyInHam = (set_allWords & set_hamWords) - (set_allWords & set_spamWords)
+
+print("intersection of vocab words with spam words excluding ham words : %d" % len(VocabWordsOnlyInSpam))
+
+print("intersection of vocab words with ham words excluding spam words : %d" % len(VocabWordsOnlyInHam))
+
+print(VocabWordsOnlyInHam)
+
+
+
+#print ("number of words in both classes : %d" % len(set_hamWords.union(set_spamWords)))
+#print ("number of common words in both classes : %d" % len(set_hamWords.intersection(set_spamWords)))
+#print(set_hamWords - set_spamWords)
+#print(set_spamWords - set_hamWords)
+
+print(stop)
 '''
 print("all")
 for i in range(300):
