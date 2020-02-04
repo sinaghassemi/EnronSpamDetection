@@ -34,7 +34,7 @@ def readFile(files_list):
 		content = content.lower()
 
 		# 2. Splitting the content based on lines,and removing all fields except body and subject
-		special_words = ['message-id:', 'date:', 'from:','sent:', 'to:','cc:','bcc', 'mime-version:', 'content-type:', 'content-transfer-encoding:', 'x-from:', 'x-to:', 'x-cc:', 'x-bcc:', 'x-origin:', 'x-filename:', 'x-priority:', 'x-msmail-priority:', 'x-mimeole:','\tcharset=']
+		special_words = ['message-id:', 'date:', 'from:','sent:', 'to:','cc:','bcc', 'mime-version:', 'content-type:', 'content-transfer-encoding:', 'x-from:', 'x-to:', 'x-cc:', 'x-bcc:', 'x-origin:', 'x-filename:', 'x-priority:', 'x-msmail-priority:', 'x-mimeole:','\tcharset=','smtp','nbsp','nextpart','mime','px','http://','&gt;','href=','src=','size=']
 		content = content.split("\n")
 		redundant_lines=[]
 		for word in special_words:
@@ -49,11 +49,36 @@ def readFile(files_list):
 		content = cleanedContent
 							
 		# 3. Get rid of HTML commands, replacing them with space 
-		cleanedContent	= re.sub("<.*?>","",content)
+
+
+		# First remove inline JavaScript/CSS:
+
+		'''
+
+		# Finally deal with whitespace
+		#cleaned = re.sub(r" ", " ", cleaned)
+		#cleaned = re.sub(r"^$", "", cleaned)
+		#cleaned = re.sub("''|,", "", cleaned)
+		#cleaned = re.sub(r"  ", " ", cleaned)
+		content = cleanedContent
+		'''
+
+
+		#'''
+		cleanedContent	= re.sub(">(.|\n)*?</","",content)
+		cleanedContent	= re.sub("<.*?>","",cleanedContent)
 		cleanedContent  = re.sub("&.*?;","",cleanedContent)
 		cleanedContent	= re.sub("=[0-9]*","",cleanedContent)
-		content = cleanedContent
+		cleanedContent = re.sub(r"(?is)<(script|style).*?>.*?()", "", cleanedContent)
+		# Then remove html comments. 
+		cleanedContent = re.sub(r"(?s)[\n]?", "", cleanedContent)
+		# Next remove the remaining tags:
+		cleanedContent = re.sub(r"(?s)<.*?>", " ", cleanedContent)
 
+
+
+		content = cleanedContent
+		#'''
 
 		# 3. Replace E-mail address with word "emailaddrs"
 		cleanedContent=""
@@ -84,7 +109,6 @@ def readFile(files_list):
 			else:
 				pass
 		'''
-
 
 		# 4. Replace tab "\t" with space
 		content = content.replace("\t"," ")
@@ -121,7 +145,39 @@ def readFile(files_list):
 				cleanedContent += (word + " ")
 		content = cleanedContent
 
-		
+
+
+		# 9. removing one letter words = a,b,c,...
+		cleanedContent=""
+		for word in content.split():
+			if len(word) > 1:
+				cleanedContent += (word + " ")
+		content = cleanedContent
+
+
+
+		# 9. removing words wich are distinctive of class
+		content = content.split()
+		distinctiveWords_indexes=[]
+		distinctiveWords_list = ['hou','kaminski', 'kevin', 'ena',  'pm', 'vince', 'enron', 'stinson','shirley',\
+			'3d', 'per',  'id', 'squirrelmail', 'mx', 'jul', 'cs',  'de', 'sans',  'xp', 'adobe', '3a',  'net', 'font','0d',\
+			'quot','helo','2e']
+		for distinctiveWord in distinctiveWords_list:
+			for word_num,word in enumerate(content):
+				if word == distinctiveWord:
+					distinctiveWords_indexes +=[word_num]
+		cleanedContent=""
+		for word_num,word in enumerate(content):
+			if word_num not in distinctiveWords_indexes:
+				cleanedContent += (word + " ")
+		content = cleanedContent
+
+		for word in content.split():
+			if word == 'enron':
+				print(word) 
+
+		# for analysys
+
 		# 8. Removing E-mails with less than 40 words
 		#minNumberOfWords = 30
 		#if len(content.split()) < minNumberOfWords:
