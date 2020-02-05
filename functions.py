@@ -9,6 +9,8 @@ import torch.nn as nn
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import torch
 
+
+
 # function to return list of all files in leaves given a root tree 
 def returnLeavesFiles(path):
 	fileList = []
@@ -32,9 +34,28 @@ def readFile(files_list):
 		# Some Preprocessing over the content : 
 		# 1. Converting all letters to lower case
 		content = content.lower()
+		'''
+		# 2. Removing everything from first line to subject and from second subject to the end:
+		content = content.split("\n")
+		firstSubject_lineNumber = 0
+		secondSubject_lineNumber = len(content)
+		numbOfSubjects = 0
+		for line_num,line in enumerate(content):
+			if "subject:" in line:
+				numbOfSubjects += 1
+				if numbOfSubjects == 1:
+					firstSubject_lineNumber = line_num
+				elif numbOfSubjects == 2:
+					secondSubject_lineNumber = line_num
+					break
 
-		# 2. Splitting the content based on lines,and removing all fields except body and subject
-		special_words = ['message-id:', 'date:', 'from:','sent:', 'to:','cc:','bcc', 'mime-version:', 'content-type:', 'content-transfer-encoding:', 'x-from:', 'x-to:', 'x-cc:', 'x-bcc:', 'x-origin:', 'x-filename:', 'x-priority:', 'x-msmail-priority:', 'x-mimeole:','return-path:','delivered-to:','received:','x-mailer:','thread-index:','content-class:','x-mimeole:','x-originalarrivaltime:','\tcharset=','smtp','nbsp','nextpart','mime','px','http://','&gt;','href=','src=','size=']
+		cleanedContent=""
+		for line_num in range(firstSubject_lineNumber,secondSubject_lineNumber):
+			cleanedContent += (content[line_num] + "\n ")
+		content = cleanedContent
+		'''
+		# 3. Splitting the content based on lines,and removing all fields except body and subject
+		special_words = ['message-id:', 'date:', 'from:','sent:', 'to:','cc:','bcc', 'mime-version:', 'content-type:', 'content-transfer-encoding:', 'x-from:', 'x-to:', 'x-cc:', 'x-bcc:', 'x-origin:', 'x-filename:', 'x-priority:', 'x-msmail-priority:', 'x-mimeole:','return-path:','delivered-to:','received:','x-mailer:','thread-index:','content-class:','x-mimeole:','x-originalarrivaltime:','charset=','http://','by projecthoneypotmailserver','--=','clamdscan:','error:','alias:','=_nextpart_','href=','src=','size=','type=']
 		content = content.split("\n")
 		redundant_lines=[]
 		for word in special_words:
@@ -45,42 +66,22 @@ def readFile(files_list):
 		cleanedContent=""
 		for line_num,line in enumerate(content):
 			if line_num not in redundant_lines:
-				cleanedContent += (line + " ")
+				cleanedContent += (line + "\n ")
 		content = cleanedContent
 							
-		# 3. Get rid of HTML commands, replacing them with space 
-
-
-		# First remove inline JavaScript/CSS:
-
+		# 4. Get rid of HTML commands, replacing them with space 
 		'''
-
-		# Finally deal with whitespace
-		#cleaned = re.sub(r" ", " ", cleaned)
-		#cleaned = re.sub(r"^$", "", cleaned)
-		#cleaned = re.sub("''|,", "", cleaned)
-		#cleaned = re.sub(r"  ", " ", cleaned)
-		content = cleanedContent
-		'''
-
-
-		#'''
-		#cleanedContent	= re.sub(">(.|\n)*?</","",content)
-		cleanedContent	= re.sub("<.*?>","",content)
+		cleanedContent	= re.sub(">(.|\n)*?</","",content)
+		cleanedContent	= re.sub("{(.|\n)*?}","",cleanedContent)
+		cleanedContent	= re.sub("<.*?>","",cleanedContent)
 		cleanedContent  = re.sub("&.*?;","",cleanedContent)
 		cleanedContent	= re.sub("=[0-9]*","",cleanedContent)
 		cleanedContent = re.sub(r"(?is)<(script|style).*?>.*?()", "", cleanedContent)
-		# Then remove html comments. 
-		cleanedContent = re.sub(r"(?s)[\n]?", "", cleanedContent)
-		# Next remove the remaining tags:
-		cleanedContent = re.sub(r"(?s)<.*?>", " ", cleanedContent)
-
-
-
+		cleanedContent = re.sub(r"(?s)[\n]?", "", cleanedContent) 		# Then remove html comments. 
+		cleanedContent = re.sub(r"(?s)<.*?>", " ", cleanedContent)		# Next remove the remaining tags:
 		content = cleanedContent
-		#'''
-
-		# 3. Replace E-mail address with word "emailaddrs"
+		'''
+		# 5. Replace E-mail address with word "emailaddrs"
 		cleanedContent=""
 		for word in content.split():
 			if "@" in word:
@@ -90,7 +91,7 @@ def readFile(files_list):
 				cleanedContent += word + " "
 		content = cleanedContent
 
-		# 3. Replace Website address with word "webaddrs"
+		# 6. Replace Website address with word "webaddrs"
 		cleanedContent=""
 		for word in content.split():
 			if (("http:" in word) or (".com" in word)):
@@ -98,21 +99,9 @@ def readFile(files_list):
 			else:
 				cleanedContent += word + " "
 		content = cleanedContent
-
-		# Enron 
-		'''
-		cleanedContent=""
-		for word in content.split():
-			if "enron" in word:
-				pass
-				#print("%s ::: %s" % (word,File))
-			else:
-				pass
-		'''
-
-		# 4. Replace tab "\t" with space
+		# 7. Replace tab "\t" with space
 		content = content.replace("\t"," ")
-		# 5. Replacing punctuation characters with space
+		# 8. Replacing punctuation characters with space
 		cleanedContent =""
 		for char in content:
 			if char in punctuation_chars:
@@ -120,9 +109,9 @@ def readFile(files_list):
 			else:
 				cleanedContent += char
 		content = cleanedContent
-		# 6. Replace multiple space with single space
+		# 9. Replace multiple space with single space
 		content = re.sub(" +"," ",content)
-		# 7. removing number with the text "number"
+		# 10. removing number with the text "number"
 		cleanedContent=""
 		for word in content.split():
 			if word.isdigit():
@@ -130,8 +119,7 @@ def readFile(files_list):
 			else:
 				cleanedContent += word + " "
 		content = cleanedContent
-
-		# 8. Removing stop words
+		# 11. Removing stop words
 		content = content.split()
 		stopwords_indexes=[]
 		stopwords_list = stopwords.words('english')
@@ -145,23 +133,16 @@ def readFile(files_list):
 				cleanedContent += (word + " ")
 		content = cleanedContent
 
-
-
-		# 9. removing one letter words = a,b,c,...
+		# 12. removing one letter words = a,b,c,...
 		cleanedContent=""
 		for word in content.split():
 			if len(word) > 1:
 				cleanedContent += (word + " ")
 		content = cleanedContent
-
-
-
-		# 9. removing words wich are distinctive of class
+		# 13. removing words wich are distinctive of class
 		content = content.split()
 		distinctiveWords_indexes=[]
-		distinctiveWords_list = ['hou','kaminski', 'kevin', 'ena',  'pm', 'vince', 'enron', 'stinson','shirley',\
-			'3d', 'per',  'id', 'squirrelmail', 'mx', 'jul', 'cs',  'de', 'sans',  'xp', 'adobe', '3a',  'net', 'font','0d',\
-			'quot','helo','2e']
+		distinctiveWords_list = ['hou','kaminski', 'kevin', 'ena','vince', 'enron','stinson','shirley','squirrelmail','ect','smtp','mime','gif','xls','mx','louise','ferc']
 		for distinctiveWord in distinctiveWords_list:
 			for word_num,word in enumerate(content):
 				if word == distinctiveWord:
@@ -172,28 +153,14 @@ def readFile(files_list):
 				cleanedContent += (word + " ")
 		content = cleanedContent
 
-		for word in content.split():
-			if word == 'enron':
-				print(word) 
-
-		# for analysys
-
-		# 8. Removing E-mails with less than 40 words
-		#minNumberOfWords = 30
-		#if len(content.split()) < minNumberOfWords:
-		#	print("skipping : less than %d words" % minNumberOfWords)
-		#	continue
-
-		# 8.remove the words with more than 40 characters
+		# 14.remove the words with more than 40 characters
 		maxWordLength = 40
 		content = "".join([word+" " for word in content.split() if len(word) <= maxWordLength])
-		#9. Store and concatenate all content into a single string for analysis
-		content_concatenated += content	
-		# 7. Splitting the content
-		# content = content.split()
-		content_list += [content]
-
-	print("\n")
+		#15. Store and concatenate all content into a single string for analysis
+		if len(content) > 0:
+			content_concatenated += content	
+			# 7. Splitting the content
+			content_list += [content]
 	return content_list,content_concatenated
 
 
