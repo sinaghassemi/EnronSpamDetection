@@ -18,7 +18,7 @@ from LSTM import ClassifierLSTM
 ##### path to spam and ham folder 
 ham_dataPath = 'data/ham/'#'/home/sina/Downloads/enron/splitted/ham/'#'data/ham/'
 spam_dataPath = 'data/spam/'#'/home/sina/Downloads/enron/splitted/spam/'#'data/spam/'
-vocabSize = 10
+vocabSize = 1000
 print("vocabulary size used in calssification : %d" % vocabSize)
 
 ##### Loading and preprocessing the data
@@ -152,7 +152,7 @@ train_data   = contentVectorized[:trainLength]
 train_label  = lableList  	[:trainLength]
 test_data    = contentVectorized[trainLength+valLength:]
 test_label   = lableList        [trainLength+valLength:]
-'''
+
 ########## Naive Bayes classifier
 print("*** Multinomial Naive Bayes Classifer ***")
 classifier = MultinomialNB()
@@ -162,7 +162,7 @@ test_conf = computeConfMatrix(prediction,test_label)
 test_hamF1Score, test_spamF1Score = performanceMetrics(test_conf)
 print("Test set, ham f1-score : %1.4f ,  spam f1-score : %1.4f " % (test_hamF1Score,test_spamF1Score))
 print("******")
-
+'''
 ########## Decision Tree Classifier
 print("*** Decision Tree Classifier ***")
 classifier = DecisionTreeClassifier()			
@@ -210,7 +210,7 @@ contentTokenized = [] # list of contents splitted into list of words
 for content in contentList:
 	contentTokenized += [content.split()]	
 
-mostCommonWords = wordSorted[:vocabSize]
+mostCommonWords = wordSorted[:vocabSize-2]
 vocab_indexing = {k:v+2 for (v,k) in enumerate(mostCommonWords)} # 0 : pad, 1: unknown(not in vocab)
 
 
@@ -260,18 +260,20 @@ test_label = lableList      [trainLength+valLength:]
 test_lengths= content_lengths[trainLength+valLength:]	
 
 # LSTM
-classifier = ClassifierLSTM(batchSize = 2,train_data = train_data,val_data = val_data,test_data = test_data,\
+classifier = ClassifierLSTM(batchSize = 32,train_data = train_data,val_data = val_data,test_data = test_data,\
 		train_label = train_label,val_label = val_label,test_label=test_label,\
 		train_lengths = train_lengths, val_lengths = val_lengths, test_lengths = test_lengths,\
-		outputSize = 1, numLayers = 1, hiddenSize = 4, embedSize = 4, vocabSize = vocabSize,\
+		outputSize = 1, numLayers = 1, hiddenSize = 16, embedSize = 32, vocabSize = vocabSize,\
 		device = 'cpu')
 
 best_spamF1Score = 0
-numEpoches = 2
+numEpoches = 10
 for epoch in range(numEpoches):
 	classifier.train()
 	classifier.val()
+	print("val f1score : %f "%classifier.val_spamF1Score)
 	if classifier.val_spamF1Score > best_spamF1Score:
+		best_spamF1Score = classifier.val_spamF1Score 
 		classifier.test()
 
 print("Test set, ham f1-score : %1.4f ,  spam f1-score : %1.4f " % (classifier.test_hamF1Score,classifier.test_spamF1Score))
