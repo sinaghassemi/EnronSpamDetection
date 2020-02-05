@@ -31,7 +31,7 @@ class ClassifierLSTM(object):
 		self.test_hamF1Score = 0
 		self.test_spamF1Score = 0
 		self.criterion = nn.BCELoss()
-		self.optimizer = torch.optim.Adam(self.__net.parameters(), lr=0.03)
+		self.optimizer = torch.optim.Adam(self.__net.parameters(), lr=0.005)
 	def train(self):
 		numMiniBatches = ceil(len(self.loaderTrain) / self.batchSize)
 		self.__net.train()
@@ -40,13 +40,15 @@ class ClassifierLSTM(object):
 			minibatch_label = minibatch_label.to(self.device)
 			minibatch_seqLength = minibatch_seqLength.to(self.device)
 			# get the output from the model
-			print(minibatch_seqLength)
-			print(minibatch_data)
 			output = self.__net(minibatch_data, minibatch_seqLength)
 			# get the loss and backprop
 			loss = self.criterion(output, minibatch_label.float())
 			self.optimizer.zero_grad() 
 			loss.backward()
+			# prevent the exploding gradient
+			clip=5 # gradient clipping
+			nn.utils.clip_grad_norm_(self.__net.parameters(), clip)
+			self.optimizer.step()
 			print("Train : MiniBatch[%3d/%3d]   Train loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()))#,end="\r")
 	def val(self):
 		numMiniBatches = ceil(len(self.loaderVal) / self.batchSize)
@@ -57,16 +59,17 @@ class ClassifierLSTM(object):
 			minibatch_label = minibatch_label.to(self.device)
 			minibatch_seqLength = minibatch_seqLength.to(self.device)
 			# get the output from the model
-			print(minibatch_seqLength)
+			#print(self.__net.lstm.weight_ih_l0)
 			output = self.__net(minibatch_data, minibatch_seqLength)
 			# get the loss and backprop
 			loss = self.criterion(output, minibatch_label.float())
 			print("Val : MiniBatch[%3d/%3d]   Val loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()))#,end="\r")
-			predicted = (minibatch_label.to('cpu')>0.5).numpy()
+			predicted = (output.to('cpu')>0.5).numpy()
 			groundtruth = minibatch_label.to('cpu').numpy()
 			groundtruth = groundtruth.astype(np.int32)
 			minibatch_conf = computeConfMatrix(predicted,groundtruth)
 			conf += minibatch_conf
+		print(conf)
 		self.val_hamF1Score,self.val_spamF1Score =  performanceMetrics(conf)
 	def test(self):
 		numMiniBatches = ceil(len(self.loaderTest) / self.batchSize)
@@ -77,12 +80,11 @@ class ClassifierLSTM(object):
 			minibatch_label = minibatch_label.to(self.device)
 			minibatch_seqLength = minibatch_seqLength.to(self.device)
 			# get the output from the model
-			print(minibatch_seqLength)
 			output = self.__net(minibatch_data, minibatch_seqLength)
 			# get the loss and backprop
 			loss = self.criterion(output, minibatch_label.float())
 			print("Test : MiniBatch[%3d/%3d]   Test loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()))#,end="\r")
-			predicted = (minibatch_label.to('cpu')>0.5).numpy()
+			predicted = (output.to('cpu')>0.5).numpy()
 			groundtruth = minibatch_label.to('cpu').numpy()
 			groundtruth = groundtruth.astype(np.int32)
 			minibatch_conf = computeConfMatrix(predicted,groundtruth)
@@ -146,14 +148,14 @@ class EnronDataLoader(object):
 class NetworkLSTM(nn.Module):
 	def __init__(self, **kwargs):
 		super().__init__()
-		outputSize = 1#kwargs.get('outputSize',1)
-		numLayers = 1#kwargs.get('numLayers',1)
-		self.hiddenSize = 4#kwargs.get('hiddenSize',4)
-		embedSize = 4#kwargs.get('embedSize',4)
-		vocabSize = 10#kwargs.get('vocabSize',1000)
-		dropout = 0#kwargs.get('dropout',0)
-		dropoutLSTM = 0#kwargs.get('dropoutLSTM',0)
-		self.device = 'cpu'#kwargs.get('device','cpu')
+		outputSize = kwargs.get('outputSize',1)
+		numLayers = kwargs.get('numLayers',1)
+		self.hiddenSize = kwargs.get('hiddenSize',4)
+		embedSize = kwargs.get('embedSize',4)
+		vocabSize = kwargs.get('vocabSize',1000)
+		dropout = kwargs.get('dropout',0)
+		dropoutLSTM = kwargs.get('dropoutLSTM',0)
+		self.device = kwargs.get('device','cpu')
 		# embedding layer 
 		self.embedding = nn.Embedding(vocabSize, embedSize)
 		# LSTM Cells
