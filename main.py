@@ -13,35 +13,36 @@ from sklearn.linear_model import LogisticRegression
 from sklearn import preprocessing
 import torch.nn as nn
 from functions import * 
-from torch.autograd import Variable
+from math import ceil
 
-# path to spam and ham folder
-ham_dataPath = 'data/ham/'
-spam_dataPath = 'data/spam/'
 
+# path to spam and ham folder #/home/sina/Downloads/enron/splitted/ham/
+ham_dataPath = '/home/sina/Downloads/enron/splitted/ham/'#'data/ham/'
+spam_dataPath = '/home/sina/Downloads/enron/splitted/spam/'#'data/spam/'
+vocabSize = 1000
 # extract the list of files in ham and spam folders
 spam_filesList = returnLeavesFiles(spam_dataPath)
 ham_filesList = returnLeavesFiles(ham_dataPath)
 print("number of spam files: %d" % len(spam_filesList))
 print("number of ham files: %d" % len(ham_filesList))
 
-
 # choosing only a number of files for quick analysis
-spam_filesList = spam_filesList[:15000]
-ham_filesList  = ham_filesList[:15000]
-
+spam_filesList = spam_filesList[:-1]
+ham_filesList  = ham_filesList[:-1]
 
 # extracting content from spam and ham files
+print('*'*5 + 'reading spam files' + '*'*5 )
 contentList_spam,allContent_spam = readFile(spam_filesList)
+print('\n'+'*'*5 + 'reading ham files' + '*'*5)
 contentList_ham,allContent_ham = readFile(ham_filesList)
 
 # concatenating contents of spam and ham 
-allContent = allContent_spam + allContent_ham
+allContent =  allContent_ham + allContent_spam
 contentList = contentList_ham + contentList_spam 
 numOfSamples = len(contentList)
 
-# labels for spam and ham 
-lableList = [1]*len(contentList_ham) + [0]*len(contentList_spam)
+# labels for [1] spam and [0] ham 
+lableList = [0]*len(contentList_ham) + [1]*len(contentList_spam)
 
 
 
@@ -60,7 +61,7 @@ contentList = contentList_shuffled
 lableList = lableList_shuffled
 
 
-# extracting vocablary from spam , ham and all content 
+# extracting vocabulary from spam , ham and all content 
 
 vocab_spam = extractVocab(allContent_spam)
 vocab_ham  = extractVocab(allContent_ham)
@@ -73,51 +74,44 @@ wordSorted_ham , wordSortedCounts_ham   = wordCount(vocab_ham)
 wordSorted , wordSortedCounts   = wordCount(vocal_all)
 
 
-print("words in spam		words in ham")
-for i in range(100):
-	print('%03d % 20s % 5d    % 20s % 5d' % (i,wordSorted_spam[i],wordSortedCounts_spam[i],wordSorted_ham[i],wordSortedCounts_ham[i])) 
+numAllWordsInSpam = len(allContent_spam.split())
+numAllWordsInHam = len(allContent_ham.split())
 
-
+print("number of words in spam:%d and ham:%d" % (numAllWordsInSpam,numAllWordsInHam))
 
 set_hamWords = set(wordSorted_ham)
 set_spamWords = set(wordSorted_spam)
-set_allWords = set(wordSorted[:100])
+set_vocabWords = set(wordSorted[:vocabSize])
 
 # words from our vocab that are only in spam e-mails not ham (distinctive words)
-VocabWordsOnlyInSpam = (set_allWords & set_spamWords) - (set_allWords & set_hamWords)
-
+VocabWordsOnlyInSpam = (set_vocabWords & set_spamWords) - (set_vocabWords & set_hamWords)
 # words from our vocab that are only in ham e-mails not spam (distinctive words)
-VocabWordsOnlyInHam = (set_allWords & set_hamWords) - (set_allWords & set_spamWords)
+VocabWordsOnlyInHam = (set_vocabWords & set_hamWords) - (set_vocabWords & set_spamWords)
 
 print("intersection of vocab words with spam words excluding ham words : %d" % len(VocabWordsOnlyInSpam))
-
 print("intersection of vocab words with ham words excluding spam words : %d" % len(VocabWordsOnlyInHam))
+print("*"*5 + "vocab words not included in ham files:")
+print((set_vocabWords & set_spamWords) - (set_vocabWords & set_hamWords))
+print("*"*5 + "vocab words not included in spam files:")
+print((set_vocabWords & set_hamWords) - (set_vocabWords & set_spamWords))
 
-print(VocabWordsOnlyInHam)
 
-
-
-#print ("number of words in both classes : %d" % len(set_hamWords.union(set_spamWords)))
-#print ("number of common words in both classes : %d" % len(set_hamWords.intersection(set_spamWords)))
-#print(set_hamWords - set_spamWords)
-#print(set_spamWords - set_hamWords)
-
-print(stop)
-'''
-print("all")
-for i in range(300):
-	print('%03d % 20s % 5d' % (i,wordSorted[i],wordSortedCounts[i])) 
-'''
-
+print("words in vocabulary ")
+for i in range(vocabSize):
+	vocabWord = wordSorted[i]
+	probWordInSpam = vocab_spam.get(vocabWord,0)
+	probWordInHam = vocab_ham.get(vocabWord,0)
+	print("%10s\tSpam : %6d\tHam : %6d" %(vocabWord,probWordInSpam,probWordInHam))
+	
 # spliting data into training / validation and test set
 
-trainLength = int(0.6 * numOfSamples)
-valLength   = int(0.2 * numOfSamples)
+trainLength = int(0.5 * numOfSamples)
+valLength   = int(0.25 * numOfSamples)
 testLength  = numOfSamples - (trainLength + valLength)
 
 
 # run naive base and logistic regression over a set of vocab sizes
-vocabSize_list = [100]#[5]#[5,10,20,50,100,500,1000,5000]
+vocabSize_list = [vocabSize]#[5]#[5,10,20,50,100,500,1000,5000]
 
 for vocabSize in vocabSize_list:
 	
@@ -201,10 +195,10 @@ contentTokenized = [] # list of contents splitted into list of words
 for content in contentList:
 	contentTokenized += [content.split()]	
 
-# constructing a vocabalary
+# constructing a vocabulary
 #vocab = extractVocab(allContent)
 #print(len(list(vocab.keys())))
-vocabSize = 100
+
 mostCommonWords = wordSorted[:vocabSize]
 vocab_indexing = {k:v+2 for (v,k) in enumerate(mostCommonWords)} # 0 : pad, 1: unknown(not in vocab)
 
@@ -245,7 +239,18 @@ val_lengths= content_lengths[trainLength : trainLength+valLength]
 
 test_data  = content_tensor[trainLength+valLength:]
 test_label = lableList      [trainLength+valLength:]
-test_lengths= content_lengths[trainLength+valLength:]		
+test_lengths= content_lengths[trainLength+valLength:]	
+
+
+
+
+for (i,l) in enumerate(content_lengths):
+	if l <= 0 :
+		print(l)
+		print(contentTokenized[i])
+		print(contentList[i])
+		#print(stop)
+	
 
 # Loaders 
 
@@ -255,6 +260,9 @@ val_DataLoader   = EnronDataLoader(data=val_data,label=val_label,seqLengths=val_
 test_DataLoader  = EnronDataLoader(data=test_data,label=test_label,seqLengths=test_lengths,batchSize=batchSize,shuffle=True)
 device = 'cuda'
 
+numMiniBatches_train = ceil(len(train_DataLoader) / 1024)
+numMiniBatches_val   = ceil(len(val_DataLoader) / 1024)
+numMiniBatches_test  = ceil(len(test_DataLoader) / 1024)
 # network
 net = NetworkLSTM(numLayers=1,outputSize=1,hiddenSize=8,embedSize=4,vocabSize=vocabSize+2,dropout=0,dropoutLSTM=0,device=device)
 net = net.to(device)
@@ -335,6 +343,6 @@ for epoch in range(numEpoches):
 
 print("Test set, ham f1-score : %1.4f ,  spam f1-score : %1.4f " % (test_hamF1Score,test_spamF1Score))
 		
-
+print(test_hamF1Score,test_spamF1Score)
 
 
