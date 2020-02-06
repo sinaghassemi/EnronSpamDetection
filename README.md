@@ -13,7 +13,7 @@ To classify E-mails to spam and non-spam (ham) classes, first we pre-process the
 The goal of this project is to detect whether an E-mail is spam or ham solely based on content and subject.
 Therefore, in pre-processing stage we remove all other parts of an email except subject and the body or the content.
 
-For reading, cleaning, and preprocessing the raw Enron-spam dataset, ```python Class EnronLoader``` is provided as following.
+For reading, cleaning, and preprocessing the raw Enron-spam dataset, ```Class EnronLoader``` is provided as following.
 
 
 
@@ -27,7 +27,7 @@ class EnronLoader(object):
 		self.spamFiles = self.__filesToBeRead(spamDir)
 		self.hamFiles  = self.__filesToBeRead(hamDir)
 		# Punctuations to be removed
-		self.punctuation_chars = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\
+		self.punctuation_marks = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\
 		 '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~']
 		# Lines including the header words will be eliminated
 		self.header_words = ['message-id:', 'date:', 'from:','sent:', 'to:','cc:','bcc', 'mime-version:', 'content-type:', \
@@ -41,6 +41,16 @@ class EnronLoader(object):
 		# if the number of words exceeded 5000, trunk the content
 		self.maxContentLength = 1000
 ```
+
+To initilize the class, two keywords arguments namely ```spamDir``` and ```hamDir``` should be provided which locates the raw files belonging to spam and ham E-mails.
+Moreover, the punctuation marks is provided which will be removed from the content as there are not usefull for distinguishing spam from ham E-mails.
+``` header_words ``` is the list of words which indicates lines in the E-mail which are not body and the subject, hence lines containing these words will be removed.
+To challenge the classification methods and their generalization capability, we also remove those most common words which are only present in one of the catagories(ham or spam),
+some of these words which are only present in ham E-mails are the name of Enron employees which the ham files are originated from, 
+or the words that are only seen in spam files are the name of the companies which have sent spam E-mail.
+Therefore, I decided to exclude these names to further challenge the classifers. In the next part, we will see how these distintive words are chosen.
+
+
 
 
 
