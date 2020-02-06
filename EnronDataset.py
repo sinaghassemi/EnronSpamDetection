@@ -31,7 +31,7 @@ class EnronLoader(object):
 		# Words in the following list will be eliminated if presented in data to avoid words which are only presented in one class (ham or spam) (distinctive words) 
 		self.distinctive_words = ['hou','kaminski', 'kevin', 'ena','vince', 'enron','stinson','shirley','squirrelmail','ect','smtp','mime','gif',\
 		'xls','mx','louise','ferc','ppin', 'wysak', 'tras', 'rien', 'saf', 'photoshop', 'viagra', 'cialis', 'xual', 'voip',\
-		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg'\
+		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg',\
 		'ist', 'xp', 'secs', 'localhost', 'futurequest']
 		# if the number of words exceeded 5000, trunk the content
 		self.maxContentLength = 1000
@@ -136,17 +136,13 @@ class EnronLoader(object):
 			# 10. Removing words with length smaller than 1 and bigger than a max
 			cleanedContent = " ".join([word for word in content.split() if ( len(word) > 1 and len(word) < 40)])
 			content = cleanedContent
-			# 15. Trunk the content if number of words exceeded a max
+			# 11. Trunk the content if number of words exceeded a max
 			if len(content.split()) > self.maxContentLength:
 				shorten_content = " ".join(content.split()[:self.maxContentLength])
 				content = shorten_content
-
-
-			for words in content.split():
-				if len(words) < 1:
-					print(words)
-
-
+			# 12. Skipping E-mails with empty content after pre-processing
+			if len(content) < 1:
+					continue
 			content_list += [content]
 		return content_list
 
