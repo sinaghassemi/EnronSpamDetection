@@ -20,7 +20,9 @@ class EnronLoader(object):
 
 		# Punctuations to be removed
 		self.punctuation_marks = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\
-		 '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~']
+		 '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~','\t']
+		# list of stop words
+		self.stopwords_list = stopwords.words('english')
 		# Lines including the header words will be eliminated
 		self.header_words = ['message-id:', 'date:', 'from:','sent:', 'to:','cc:','bcc', 'mime-version:', 'content-type:', \
 		'content-transfer-encoding:', 'x-from:', 'x-to:', 'x-cc:', 'x-bcc:', 'x-origin:', 'x-filename:', 'x-priority:', 'x-msmail-priority:',\
@@ -28,8 +30,9 @@ class EnronLoader(object):
 		'charset=','http://','by projecthoneypotmailserver','--=','clamdscan:','error:','alias:','=_nextpart_','href=','src=','size=','type=']
 		# Words in the following list will be eliminated if presented in data to avoid words which are only presented in one class (ham or spam) (distinctive words) 
 		self.distinctive_words = ['hou','kaminski', 'kevin', 'ena','vince', 'enron','stinson','shirley','squirrelmail','ect','smtp','mime','gif',\
-		'xls','mx','louise','ferc',	'ppin', 'wysak', 'tras', 'rien', 'saf', 'photoshop', 'viagra', 'cialis', 'xual', 'voip',\
-		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg']
+		'xls','mx','louise','ferc','ppin', 'wysak', 'tras', 'rien', 'saf', 'photoshop', 'viagra', 'cialis', 'xual', 'voip',\
+		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg'\
+		'ist', 'xp', 'secs', 'localhost', 'futurequest']
 		# if the number of words exceeded 5000, trunk the content
 		self.maxContentLength = 1000
 
@@ -63,64 +66,41 @@ class EnronLoader(object):
 			# Some Preprocessing over the content : 
 			# 1. Converting all letters to lower case
 			content = content.lower()
-			# 2. Removing everything from first line to subject and from the second subject to the end:
-			content = content.split("\n")
-			firstSubject_lineNumber = 0
-			secondSubject_lineNumber = len(content)
-			numbOfSubjects = 0
-			for line_num,line in enumerate(content):
-				if "subject:" in line:
-					numbOfSubjects += 1
-					if numbOfSubjects == 1:
-						firstSubject_lineNumber = line_num
-					elif numbOfSubjects == 2:
-						secondSubject_lineNumber = line_num
+			# 2. Splitting the content based on lines, and removing fields except body and subject
+			cleanedContent=""
+			for line_num,line in enumerate(content.split("\n")):
+				for word in self.header_words:
+					if word in line: # if word in line , we don't want that line
 						break
+					elif word == self.header_words[-1]: # if word not in line and we check all the words, we  want that line
+						cleanedContent += (line + "\n ")		
+			content = cleanedContent
+								
+			# 3. Get rid of HTML commands, replacing them with space 
+			content	= re.sub(">(.|\n)*?</","",content)
+			content	= re.sub("{(.|\n)*?}","",content)
+			content	= re.sub("<.*?>","",content)
+			content = re.sub("&.*?;","",content)
+			content	= re.sub("=[0-9]*","",content)		
 
-			cleanedContent=""
-			for line_num in range(firstSubject_lineNumber,secondSubject_lineNumber):
-				cleanedContent += (content[line_num] + "\n ")
-			content = cleanedContent
-			# 3. Splitting the content based on lines, and removing fields except body and subject
-			content = content.split("\n")
-			redundant_lines=[]
-			for word in self.header_words:
-				for line_num,line in enumerate(content):
-					if word in line:
-						redundant_lines +=[line_num]
-						#break # go for the next word
-			cleanedContent=""
-			for line_num,line in enumerate(content):
-				if line_num not in redundant_lines:
-					cleanedContent += (line + "\n ")
-			content = cleanedContent					
-			# 4. Get rid of HTML commands, replacing them with space 
-			cleanedContent	= re.sub(">(.|\n)*?</","",content)
-			cleanedContent	= re.sub("{(.|\n)*?}","",cleanedContent)
-			cleanedContent	= re.sub("<.*?>","",cleanedContent)
-			cleanedContent  = re.sub("&.*?;","",cleanedContent)
-			cleanedContent	= re.sub("=[0-9]*","",cleanedContent)		
-			content = cleanedContent
-			# 5. Replace E-mail address with word "emailaddrs"
+			# 4. Replace E-mail address with word "emailaddrs" 
+			#       and Website address with word "webaddrs"
 			cleanedContent=""
 			for word in content.split():
 				if "@" in word:
-					#print(word)
 					cleanedContent += "emailaddrs "
-				else:
-					cleanedContent += word + " "
-			content = cleanedContent
-			# 6. Replace Website address with word "webaddrs"
-			cleanedContent=""
-			for word in content.split():
-				if (("http:" in word) or (".com" in word)):
+					continue
+				if ("http:" in word) or (".com" in word):
 					cleanedContent += "webaddrs "
-				else:
-					cleanedContent += word + " "
+					continue					
+				cleanedContent += word + " "
 			content = cleanedContent
-			# 7. Replace tab "\t" with space
-			content = content.replace("\t"," ")
-			# 8. Replacing punctuation characters with space
+
+			# 5. Replace dates and time with 'date' and 'time'
+			content = re.sub(" [0-9]{2}/[0-9]{2}/[0-9]{4} " ," date ",content) 
+			content	= re.sub(" [0-9]{1,2}:[0-9]{2} ",' time ',content)
+
+			# 6. Replace punctuation characters with space
 			cleanedContent =""
 			for char in content:
 				if char in self.punctuation_marks:
@@ -128,57 +108,46 @@ class EnronLoader(object):
 				else:
 					cleanedContent += char
 			content = cleanedContent
-			# 9. Replace multiple space with single space
-			content = re.sub(" +"," ",content)
-			# 10. Replace number with the text "number"
+
+			# 7. Replace number with the text "number"
 			cleanedContent=""
 			for word in content.split():
 				if word.isdigit():
 					cleanedContent += "number "
-				else:
-					cleanedContent += word + " "
+					continue					
+				cleanedContent += word + " "
 			content = cleanedContent
-			# 11. Removing stop words
-			content = content.split()
-			stopwords_indexes=[]
-			stopwords_list = stopwords.words('english')
-			for stopword in stopwords_list:
-				for word_num,word in enumerate(content):
-					if word == stopword:
-						stopwords_indexes +=[word_num]
-			cleanedContent=""
-			for word_num,word in enumerate(content):
-				if word_num not in stopwords_indexes:
-					cleanedContent += (word + " ")
-			content = cleanedContent
-			# 12. removing one letter words = a,b,c,...
+
+			# 8. Replace multiple consecutive spaces
+			content = re.sub(" +"," ",content)
+
+			# 9. Removing stop words and distinctive words
+			WordsToBeRemoved = self.stopwords_list + self.distinctive_words
 			cleanedContent=""
 			for word in content.split():
-				if len(word) > 1:
-					cleanedContent += (word + " ")
+				#print(word)
+				for word_toBRem in WordsToBeRemoved:
+					if word == word_toBRem: # we don't want this word
+						break
+					elif word_toBRem == WordsToBeRemoved[-1]:
+						cleanedContent += (word + " ")
 			content = cleanedContent
-			# 13. removing words wich are distinctive of class
-			content = content.split()
-			distinctiveWords_indexes=[]
-			for distinctiveWord in self.distinctive_words:
-				for word_num,word in enumerate(content):
-					if word == distinctiveWord:
-						distinctiveWords_indexes +=[word_num]
-			cleanedContent=""
-			for word_num,word in enumerate(content):
-				if word_num not in distinctiveWords_indexes:
-					cleanedContent += (word + " ")
+			
+			# 10. Removing words with length smaller than 1 and bigger than a max
+			cleanedContent = " ".join([word for word in content.split() if ( len(word) > 1 and len(word) < 40)])
 			content = cleanedContent
-			# 14.remove the words with more than 40 characters
-			maxWordLength = 40
-			content = " ".join([word for word in content.split() if len(word) <= maxWordLength])
-			# 15. Trunk the content if number of words exceeded
+			# 15. Trunk the content if number of words exceeded a max
 			if len(content.split()) > self.maxContentLength:
 				shorten_content = " ".join(content.split()[:self.maxContentLength])
 				content = shorten_content
-			# 16. skipping one word content
-			if len(content.split()) > 1:
-				content_list += [content]
+
+
+			for words in content.split():
+				if len(words) < 1:
+					print(words)
+
+
+			content_list += [content]
 		return content_list
 
 class EnronBatchLoader(object):
