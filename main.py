@@ -192,7 +192,7 @@ test_hamF1Score, test_spamF1Score = performanceMetrics(test_conf)
 print("Test set, ham f1-score : %1.4f ,  spam f1-score : %1.4f " % (test_hamF1Score,test_spamF1Score))
 print("******")
 
-
+'''
 ########## K-Nearest Neighbors
 print("*** K-Nearest Neighbors Classifer ***")
 classifier = KNeighborsClassifier()			
@@ -218,7 +218,7 @@ test_loader  = EnronBatchLoader(data = torch.Tensor(test_data)	,label = torch.Te
 
 classifier = ClassifierLogisticRegression(batchSize = 32,outputSize = 1,   inputSize = BoW_size, device = 'cpu')
 best_spamF1Score = 0
-numEpoches_max = 1000
+numEpoches_max = 10
 epoch = 0
 # if perfromance dose not imporve for certain number of consecutive epoches stop the training
 numEoches_stopCriteria = 20 
@@ -242,7 +242,7 @@ classifier.loadWeights('bestModel_LL.pt')
 hamF1Score, spamF1Score = classifier.predict(test_loader)
 print("Test set, ham f1-score : %1.4f ,  spam f1-score : %1.4f " % (hamF1Score,spamF1Score))
 print("******")
-
+'''
 ########## LSTM
 print("*** Long Short Term Memory Classifer ***")
 # input data for lstm is extracted using a larger vocabulary which will then be embedded in lower dimentional space
@@ -251,6 +251,8 @@ content_lengths = []
 for content in contentList:
 	length = len(content.split())
 	content_lengths += [length] 
+	if length < 1:
+		print(length)
 maxLength = max(content_lengths)
 
 '''
@@ -323,10 +325,10 @@ classifier = ClassifierLSTM(batchSize = batchSize,train_data = train_data,val_da
 		train_label = train_label,val_label = val_label,test_label=test_label,\
 		train_lengths = train_lengths, val_lengths = val_lengths, test_lengths = test_lengths,\
 		outputSize = 1, numLayers = 2, hiddenSize = 32, embedSize = 512, vocabSize = vocabSize,\
-		device = 'cuda')
+		device = 'cpu')
 
 best_spamF1Score = 0
-numEpoches_max = 1000
+numEpoches_max = 2
 epoch = 0
 # if perfromance dose not imporve for certain number of consecutive epoches stop the training
 numEoches_stopCriteria = 5 
