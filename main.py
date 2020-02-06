@@ -192,7 +192,7 @@ test_hamF1Score, test_spamF1Score = performanceMetrics(test_conf)
 print("Test set, ham f1-score : %1.4f ,  spam f1-score : %1.4f " % (test_hamF1Score,test_spamF1Score))
 print("******")
 
-'''
+
 ########## K-Nearest Neighbors
 print("*** K-Nearest Neighbors Classifer ***")
 classifier = KNeighborsClassifier()			
@@ -242,7 +242,7 @@ classifier.loadWeights('bestModel_LL.pt')
 hamF1Score, spamF1Score = classifier.predict(test_loader)
 print("Test set, ham f1-score : %1.4f ,  spam f1-score : %1.4f " % (hamF1Score,spamF1Score))
 print("******")
-'''
+
 ########## LSTM
 print("*** Long Short Term Memory Classifer ***")
 # input data for lstm is extracted using a larger vocabulary which will then be embedded in lower dimentional space
@@ -251,8 +251,6 @@ content_lengths = []
 for content in contentList:
 	length = len(content.split())
 	content_lengths += [length] 
-	if length < 1:
-		print(length)
 maxLength = max(content_lengths)
 
 '''
