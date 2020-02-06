@@ -11,8 +11,10 @@ To classify E-mails to spam and non-spam (ham) classes, first we pre-process the
 
 
 The goal of this project is to detect whether an E-mail is spam or ham solely based on content and subject.
-Therefore, in pre-processing stage we remain all other part of the email except subject and the body or the content.
-In additi
+Therefore, in pre-processing stage we remove all other parts of an email except subject and the body or the content.
+
+For reading, cleaning, and preprocessing the raw Enron-spam dataset, ```python class EnronLoader``` is written.
+The input 
 
 
 
