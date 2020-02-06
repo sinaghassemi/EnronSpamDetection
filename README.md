@@ -50,10 +50,6 @@ some of these words which are only present in ham E-mails are the name of Enron 
 or the words that are only seen in spam files are the name of the companies which have sent spam E-mail.
 Therefore, I decided to exclude these names to further challenge the classifiers. In the next part, we will see how these distintive words are chosen.
 
-
-
-
-
 ```python
 class EnronLoader(object):
 	.
@@ -81,7 +77,7 @@ class EnronLoader(object):
 
 ```
 
-The class ```EnronLoader``` also includes a method ```__filesToBeRead(self,path)``` which returns the list of file given the root directory.
+The class ```EnronLoader``` also includes a method ```__filesToBeRead(self,path)``` which returns the list of files given the root directory.
 Methods ```readHam(self)``` and ```readSpam(self)``` are used to read and preprocess all the files in ```spamDir``` and ```hamDir```.
 
 
@@ -123,6 +119,99 @@ class EnronLoader(object):
 
 
 ```
+
+The ```__preprocess(self,files_list)``` method is used to prepare and process the raw content from a list of files,
+the method can be catagorized into 16 steps as following. In the step 1, all the letters in the content are transformed to lower case.
+In the second step, to preserve only the subject and the body of the E-mail and also to prevent repetetive content in the case of E-mail reply,
+all lines from the first line to the line includes subject (which is header including information such as sender,data) is removed, and also if there is a second subject (in the case of reply) 
+everthing after second subject is removed to avoid duplicates in samples, particularly it is not desirable if a duplicate version of a sample is in both training and test sets which will undermine the classifier performance. 
+
+
+
+
+```python
+class EnronLoader(object):
+	.
+	.
+	.
+
+	def __preprocess(self,files_list):
+		.
+		.
+		.
+		.
+			# 3. Splitting the content based on lines, and removing fields except body and subject
+			content = content.split("\n")
+			redundant_lines=[]
+			for word in self.header_words:
+				for line_num,line in enumerate(content):
+					if word in line:
+						redundant_lines +=[line_num]
+						#break # go for the next word
+			cleanedContent=""
+			for line_num,line in enumerate(content):
+				if line_num not in redundant_lines:
+					cleanedContent += (line + "\n ")
+			content = cleanedContent					
+			# 4. Get rid of HTML commands, replacing them with space 
+			cleanedContent	= re.sub(">(.|\n)*?</","",content)
+			cleanedContent	= re.sub("{(.|\n)*?}","",cleanedContent)
+			cleanedContent	= re.sub("<.*?>","",cleanedContent)
+			cleanedContent  = re.sub("&.*?;","",cleanedContent)
+			cleanedContent	= re.sub("=[0-9]*","",cleanedContent)		
+			content = cleanedContent
+			# 5. Replace E-mail address with word "emailaddrs"
+			cleanedContent=""
+			for word in content.split():
+				if "@" in word:
+					#print(word)
+					cleanedContent += "emailaddrs "
+				else:
+					cleanedContent += word + " "
+			content = cleanedContent
+			# 6. Replace Website address with word "webaddrs"
+			cleanedContent=""
+			for word in content.split():
+				if (("http:" in word) or (".com" in word)):
+					cleanedContent += "webaddrs "
+				else:
+					cleanedContent += word + " "
+			content = cleanedContent
+
+```
+
+
+
+In third step, we reomved the lines including words such as 'date:', 'from:','sent:',... . Since the E-mail contents especially spam ones include alot of HTML syntaxes, regular expression are used to remove these type of syntaxes.
+Then, we also subtitute the E-mail addresses with the word "emailaddrs" and also website addresses with the word "webaddrs" to constrain the classifier on the content not clues related to E-mail or website address.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
