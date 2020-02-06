@@ -1,6 +1,8 @@
 import os 
 import re
 import nltk
+import torch
+import numpy as np
 from nltk.corpus import stopwords
 nltk.download('stopwords')
 
@@ -14,8 +16,8 @@ class EnronLoader(object):
 		self.spamFiles = self.__filesToBeRead(spamDir)
 		self.hamFiles  = self.__filesToBeRead(hamDir)
 
-		self.spamFiles = self.spamFiles[:1000]
-		self.hamFiles = self.hamFiles[:1000]
+		self.spamFiles = self.spamFiles[:10000]
+		self.hamFiles = self.hamFiles[:10000]
 
 		# Punctuations to be removed
 		self.punctuation_chars = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\
@@ -29,6 +31,8 @@ class EnronLoader(object):
 		self.distinctive_words = ['hou','kaminski', 'kevin', 'ena','vince', 'enron','stinson','shirley','squirrelmail','ect','smtp','mime','gif',\
 		'xls','mx','louise','ferc',	'ppin', 'wysak', 'tras', 'rien', 'saf', 'photoshop', 'viagra', 'cialis', 'xual', 'voip',\
 		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg']
+		# if the number of words exceeded 5000, trunk the content
+		self.maxContentLength = 1000
 
 	def __filesToBeRead(self,path):
 	# function to return list of all files in leaves given a root tree directory
@@ -172,8 +176,89 @@ class EnronLoader(object):
 			# 14.remove the words with more than 40 characters
 			maxWordLength = 40
 			content = " ".join([word for word in content.split() if len(word) <= maxWordLength])
-			#15. Store and concatenate all content into a single string for analysis
+			# 15. Trunk the content if number of words exceeded
+			if len(content.split()) > self.maxContentLength:
+				shorten_content = " ".join(content.split()[:self.maxContentLength])
+				content = shorten_content
+			# 16. skipping one word content
 			if len(content.split()) > 1:
 				content_list += [content]
 		return content_list
+
+class EnronBatchLoader(object):
+	def __init__(self, **kwargs):
+		self.batchSize 	= kwargs.get('batchSize')
+		self.data 	= kwargs.get('data')
+		self.label 	= kwargs.get('label')
+		self.seqLengths = kwargs.get('seqLengths')
+		self.LSTM       = kwargs.get('LSTM',False)
+
+		# check the inputs
+		if not isinstance(self.batchSize, int):
+			print(type(self.batchSize))
+			raise TypeError('batch size should be an integer')
+		if not isinstance(self.data, type(torch.Tensor())):
+			raise TypeError('data should be a tensor')
+		if not isinstance(self.label, type(torch.Tensor())):
+			raise TypeError('label should be a tensor')
+		if self.LSTM :
+			if not isinstance(self.seqLengths, type(torch.Tensor())):
+				raise TypeError('seqLengths should be a tensor')
+		self.size 	= self.label.size(0)
+		self.shuffle	= kwargs.get('shuffle',False)	
+	def _batchSampler(self):
+		# return a batch indexes using 
+		batchIndexes = []
+		for idx in self.sampler_index:
+			batchIndexes.append(idx)
+			if len(batchIndexes) == self.batchSize:
+				yield batchIndexes
+				batchIndexes = []
+		if len(batchIndexes) > 0 :
+			yield batchIndexes
+	def __iter__(self):
+		if self.shuffle:
+			self.sampler_index = iter(np.random.permutation(self.size))
+		else:
+			self.sampler_index = iter(range(self.size))
+		self.__batchSampler = self._batchSampler()
+		return self
+	def __next__(self):
+		batchInd = next(self.__batchSampler)
+		batch_data = self.data[batchInd]
+		batch_label = self.label[batchInd]
+		if not self.LSTM: 
+			return batch_data, batch_label
+		else:
+			batch_seqLengths = self.seqLengths[batchInd]
+			batch_seqLengths, sorted_indexes = batch_seqLengths.sort(0, descending=True)
+			batch_data = batch_data[sorted_indexes]
+			batch_label = batch_label[sorted_indexes]
+			return batch_data, batch_label, batch_seqLengths
+	def __len__(self):
+		return self.size
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

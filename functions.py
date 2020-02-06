@@ -41,7 +41,6 @@ def computeConfMatrix(classifierOutputs,groundtruthList):
 		confusionMatrix[predicted][groundtruth] += 1
 	return confusionMatrix
 
-
 def performanceMetrics(confusionMatrix):
 	precision_ham = confusionMatrix[0][0] / confusionMatrix.sum(axis=1)[0]
 	recall_ham    = confusionMatrix[0][0] / confusionMatrix.sum(axis=0)[0]
@@ -50,7 +49,6 @@ def performanceMetrics(confusionMatrix):
 	recall_spam   = confusionMatrix[1][1] / confusionMatrix.sum(axis=0)[1]
 	f1Score_spam  = 2 * precision_spam * recall_spam / (precision_spam + recall_spam)
 	return f1Score_ham, f1Score_spam
-
 
 def meanAndStd(data):
 	# it takes data as array (n_samples x n_features)
