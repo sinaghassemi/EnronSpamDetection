@@ -264,21 +264,17 @@ print("******")
 
 
 ########## LSTM
-
-
+print("*** Long Short Term Memory Classifer ***")
 # input data for lstm is extracted using a larger vocabulary which will then be embedded in lower dimentional space
 # as lstm can accept input of different sizes, we will not use bags of words, instead word embedding will be utilized
-
-
-
 content_lengths = []
 for content in contentList:
 	length = len(content.split())
 	content_lengths += [length] 
 maxLength = max(content_lengths)
-print("maximum sequence length:%d" % maxLength)
 
-
+#plt.hist(np.array(content_lengths))
+#plt.show()
 
 # tokenization : split each content to a list of words
 contentTokenized = [] # list of contents splitted into list of words

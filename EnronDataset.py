@@ -6,7 +6,6 @@ import numpy as np
 from nltk.corpus import stopwords
 nltk.download('stopwords')
 
-
 class EnronLoader(object):
 	def __init__(self,**kwargs):
 		spamDir = kwargs.get('spamDir')
@@ -100,10 +99,7 @@ class EnronLoader(object):
 			cleanedContent	= re.sub("{(.|\n)*?}","",cleanedContent)
 			cleanedContent	= re.sub("<.*?>","",cleanedContent)
 			cleanedContent  = re.sub("&.*?;","",cleanedContent)
-			cleanedContent	= re.sub("=[0-9]*","",cleanedContent)
-			cleanedContent = re.sub(r"(?is)<(script|style).*?>.*?()", "", cleanedContent)
-			cleanedContent = re.sub(r"(?s)[\n]?", "", cleanedContent) 		 
-			cleanedContent = re.sub(r"(?s)<.*?>", " ", cleanedContent)		
+			cleanedContent	= re.sub("=[0-9]*","",cleanedContent)		
 			content = cleanedContent
 			# 5. Replace E-mail address with word "emailaddrs"
 			cleanedContent=""

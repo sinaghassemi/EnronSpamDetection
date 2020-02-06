@@ -29,7 +29,7 @@ class ClassifierLogisticRegression(object):
 			self.optimizer.zero_grad() 
 			loss.backward()
 			self.optimizer.step()
-			#print("Train : MiniBatch[%3d/%3d]   Train loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()),end="\r")
+			print("Train : MiniBatch[%3d/%3d]   Train loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()),end="\r")
 	def predict(self,loader):
 		numMiniBatches = ceil(len(loader) / self.batchSize)
 		self.model.eval()
@@ -39,7 +39,7 @@ class ClassifierLogisticRegression(object):
 			minibatch_label = minibatch_label.to(self.device)
 			output = self.model(minibatch_data)
 			loss = self.criterion(output, minibatch_label.float())
-			#print("Val : MiniBatch[%3d/%3d]   Val loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()),end="\r")
+			print("Val : MiniBatch[%3d/%3d]   Val loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()),end="\r")
 			predicted = (output.to('cpu')>0.5).numpy().squeeze()
 			groundtruth = minibatch_label.to('cpu').numpy()
 			groundtruth = groundtruth.astype(np.int32)
