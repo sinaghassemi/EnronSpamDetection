@@ -43,19 +43,90 @@ class EnronLoader(object):
 ```
 
 To initilize the class, two keywords arguments namely ```spamDir``` and ```hamDir``` should be provided which locates the raw files belonging to spam and ham E-mails.
-Moreover, the punctuation marks is provided which will be removed from the content as there are not usefull for distinguishing spam from ham E-mails.
+Moreover, the punctuation marks is provided which will be removed from the content as they are not usefull for distinguishing spam from ham E-mails.
 ``` header_words ``` is the list of words which indicates lines in the E-mail which are not body and the subject, hence lines containing these words will be removed.
-To challenge the classification methods and their generalization capability, we also remove those most common words which are only present in one of the catagories(ham or spam),
+To challenge the classification methods and their generalization capability, I also remove the most common words which are only present in one of the catagories(ham or spam),
 some of these words which are only present in ham E-mails are the name of Enron employees which the ham files are originated from, 
 or the words that are only seen in spam files are the name of the companies which have sent spam E-mail.
-Therefore, I decided to exclude these names to further challenge the classifers. In the next part, we will see how these distintive words are chosen.
+Therefore, I decided to exclude these names to further challenge the classifiers. In the next part, we will see how these distintive words are chosen.
 
 
 
 
 
+```python
+class EnronLoader(object):
+	.
+	.
+	.
 
-The 
+	def __filesToBeRead(self,path):
+	# function to return list of all files in leaves given a root tree directory
+		fileList = []
+		for root,dirs,files in os.walk(path):
+			if len(dirs) == 0: 	# leaves : containing the files
+				for f in files:
+					fileList += [os.path.join(root,f)]
+		return fileList
+
+	def readHam(self):
+		print('\n'+'*'*5 + 'reading ham files' + '*'*5)
+		content = self.__preprocess(self.hamFiles)
+		return content
+
+	def readSpam(self):
+		print('\n'+'*'*5 + 'reading spam files' + '*'*5)
+		content = self.__preprocess(self.spamFiles)
+		return content
+
+```
+
+The class ```EnronLoader``` also includes a method ```__filesToBeRead(self,path)``` which returns the list of file given the root directory.
+Methods ```readHam(self)``` and ```readSpam(self)``` are used to read and preprocess all the files in ```spamDir``` and ```hamDir```.
+
+
+```python
+class EnronLoader(object):
+	.
+	.
+	.
+
+	def __preprocess(self,files_list):
+		content_list=[]
+		numOfFiles = len(files_list)
+		for (num_file,File) in enumerate(files_list):
+			print("Reading and pre-processing content [% 5d / %d] : %s" % (num_file+1,numOfFiles,File),end="\r")
+			f = open(File,'r',encoding="ISO-8859-1")
+			content = f.read()
+			f.close()
+			# Some Preprocessing over the content : 
+			# 1. Converting all letters to lower case
+			content = content.lower()
+			# 2. Removing everything from first line to subject and from the second subject to the end:
+			content = content.split("\n")
+			firstSubject_lineNumber = 0
+			secondSubject_lineNumber = len(content)
+			numbOfSubjects = 0
+			for line_num,line in enumerate(content):
+				if "subject:" in line:
+					numbOfSubjects += 1
+					if numbOfSubjects == 1:
+						firstSubject_lineNumber = line_num
+					elif numbOfSubjects == 2:
+						secondSubject_lineNumber = line_num
+						break
+
+			cleanedContent=""
+			for line_num in range(firstSubject_lineNumber,secondSubject_lineNumber):
+				cleanedContent += (content[line_num] + "\n ")
+			content = cleanedContent
+
+
+```
+
+
+
+
 
 
 # 1.1 Lower case
