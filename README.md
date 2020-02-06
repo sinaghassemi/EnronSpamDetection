@@ -13,9 +13,39 @@ To classify E-mails to spam and non-spam (ham) classes, first we pre-process the
 The goal of this project is to detect whether an E-mail is spam or ham solely based on content and subject.
 Therefore, in pre-processing stage we remove all other parts of an email except subject and the body or the content.
 
-For reading, cleaning, and preprocessing the raw Enron-spam dataset, ```python class EnronLoader``` is written.
-The input 
+For reading, cleaning, and preprocessing the raw Enron-spam dataset, ```python Class EnronLoader``` is provided as following.
 
+
+
+```python
+class EnronLoader(object):
+	def __init__(self,**kwargs):
+		spamDir = kwargs.get('spamDir')
+		hamDir  = kwargs.get('hamDir')
+		if spamDir == None or hamDir == None:
+			raise NameError("the directory containing ham and spam should be provided")
+		self.spamFiles = self.__filesToBeRead(spamDir)
+		self.hamFiles  = self.__filesToBeRead(hamDir)
+		# Punctuations to be removed
+		self.punctuation_chars = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\
+		 '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~']
+		# Lines including the header words will be eliminated
+		self.header_words = ['message-id:', 'date:', 'from:','sent:', 'to:','cc:','bcc', 'mime-version:', 'content-type:', \
+		'content-transfer-encoding:', 'x-from:', 'x-to:', 'x-cc:', 'x-bcc:', 'x-origin:', 'x-filename:', 'x-priority:', 'x-msmail-priority:',\
+		 'x-mimeole:','return-path:','delivered-to:','received:','x-mailer:','thread-index:','content-class:','x-mimeole:','x-originalarrivaltime:',\
+		'charset=','http://','by projecthoneypotmailserver','--=','clamdscan:','error:','alias:','=_nextpart_','href=','src=','size=','type=']
+		# Words in the following list will be eliminated if presented in data to avoid words which are only presented in one class (ham or spam) (distinctive words) 
+		self.distinctive_words = ['hou','kaminski', 'kevin', 'ena','vince', 'enron','stinson','shirley','squirrelmail','ect','smtp','mime','gif',\
+		'xls','mx','louise','ferc',	'ppin', 'wysak', 'tras', 'rien', 'saf', 'photoshop', 'viagra', 'cialis', 'xual', 'voip',\
+		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg']
+		# if the number of words exceeded 5000, trunk the content
+		self.maxContentLength = 1000
+```
+
+
+
+
+The 
 
 
 # 1.1 Lower case
