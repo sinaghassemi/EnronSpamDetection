@@ -181,13 +181,111 @@ class EnronLoader(object):
 ```
 
 
-
 In third step, we reomved the lines including words such as 'date:', 'from:','sent:',... . Since the E-mail contents especially spam ones include alot of HTML syntaxes, regular expression are used to remove these type of syntaxes.
 Then, we also subtitute the E-mail addresses with the word "emailaddrs" and also website addresses with the word "webaddrs" to constrain the classifier on the content not clues related to E-mail or website address.
 
 
 
+```python
+class EnronLoader(object):
+	.
+	.
+	.
 
+	def __preprocess(self,files_list):
+		.
+		.
+		.
+		.
+
+			# 7. Replace tab "\t" with space
+			content = content.replace("\t"," ")
+			# 8. Replacing punctuation marks with space
+			cleanedContent =""
+			for char in content:
+				if char in self.punctuation_marks:
+					cleanedContent += " "
+				else:
+					cleanedContent += char
+			content = cleanedContent
+			# 9. Replace multiple space with single space
+			content = re.sub(" +"," ",content)
+			# 10. Replace number with the text "number"
+			cleanedContent=""
+			for word in content.split():
+				if word.isdigit():
+					cleanedContent += "number "
+				else:
+					cleanedContent += word + " "
+			content = cleanedContent
+			# 11. Removing stop words
+			content = content.split()
+			stopwords_indexes=[]
+			stopwords_list = stopwords.words('english')
+			for stopword in stopwords_list:
+				for word_num,word in enumerate(content):
+					if word == stopword:
+						stopwords_indexes +=[word_num]
+			cleanedContent=""
+			for word_num,word in enumerate(content):
+				if word_num not in stopwords_indexes:
+					cleanedContent += (word + " ")
+			content = cleanedContent
+
+```
+
+In the following, puntcuation marks ,'\t' , and multiple consecutive spaces are replace with single space.
+In step 10, we also replace any number in the content with the word "number", as for the classifier to be able to detect spam it is only suffiecent to know there is a number in the content,
+and the exact number does not matter it will increase the vocabulary size.
+Moreover, stop words such as “the”, “a”, “an”, “in” are removed from the content as they can not be served as discrimintaive features for the classifier.
+
+
+
+```python
+class EnronLoader(object):
+	.
+	.
+	.
+
+	def __preprocess(self,files_list):
+		.
+		.
+		.
+		.
+			# 12. removing one character words = a,b,c,...
+			cleanedContent=""
+			for word in content.split():
+				if len(word) > 1:
+					cleanedContent += (word + " ")
+			content = cleanedContent
+			# 13. removing words wich are distinctive of class
+			content = content.split()
+			distinctiveWords_indexes=[]
+			for distinctiveWord in self.distinctive_words:
+				for word_num,word in enumerate(content):
+					if word == distinctiveWord:
+						distinctiveWords_indexes +=[word_num]
+			cleanedContent=""
+			for word_num,word in enumerate(content):
+				if word_num not in distinctiveWords_indexes:
+					cleanedContent += (word + " ")
+			content = cleanedContent
+			# 14.remove the words with more than 40 characters
+			maxWordLength = 40
+			content = " ".join([word for word in content.split() if len(word) <= maxWordLength])
+			# 15. Trunk the content if number of words exceeded
+			if len(content.split()) > self.maxContentLength:
+				shorten_content = " ".join(content.split()[:self.maxContentLength])
+				content = shorten_content
+			# 16. skipping one word content
+			if len(content.split()) > 1:
+				content_list += [content]
+
+
+```
+
+Step 12 and 14 one charecter words and word with more than 40 characters are removed, these words are remaining data after several pre-processing steps and they will not
+provide information to classifer and can increase the vocabulary size.
 
 
 
