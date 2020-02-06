@@ -15,11 +15,11 @@ class EnronLoader(object):
 		self.spamFiles = self.__filesToBeRead(spamDir)
 		self.hamFiles  = self.__filesToBeRead(hamDir)
 
-		self.spamFiles = self.spamFiles[:10000]
-		self.hamFiles = self.hamFiles[:10000]
+		self.spamFiles = self.spamFiles[:-1]
+		self.hamFiles = self.hamFiles[:-1]
 
 		# Punctuations to be removed
-		self.punctuation_chars = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\
+		self.punctuation_marks = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\
 		 '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~']
 		# Lines including the header words will be eliminated
 		self.header_words = ['message-id:', 'date:', 'from:','sent:', 'to:','cc:','bcc', 'mime-version:', 'content-type:', \
@@ -56,14 +56,14 @@ class EnronLoader(object):
 		content_list=[]
 		numOfFiles = len(files_list)
 		for (num_file,File) in enumerate(files_list):
-			print("Reading and Preprocessing content [% 5d / %d] : %s" % (num_file+1,numOfFiles,File),end="\r")
+			print("Reading and pre-processing content [% 5d / %d] : %s" % (num_file+1,numOfFiles,File),end="\r")
 			f = open(File,'r',encoding="ISO-8859-1")
 			content = f.read()
 			f.close()
 			# Some Preprocessing over the content : 
 			# 1. Converting all letters to lower case
 			content = content.lower()
-			# 2. Removing everything from first line to subject and from second subject to the end:
+			# 2. Removing everything from first line to subject and from the second subject to the end:
 			content = content.split("\n")
 			firstSubject_lineNumber = 0
 			secondSubject_lineNumber = len(content)
@@ -81,7 +81,7 @@ class EnronLoader(object):
 			for line_num in range(firstSubject_lineNumber,secondSubject_lineNumber):
 				cleanedContent += (content[line_num] + "\n ")
 			content = cleanedContent
-			# 3. Splitting the content based on lines,and removing all fields except body and subject
+			# 3. Splitting the content based on lines, and removing fields except body and subject
 			content = content.split("\n")
 			redundant_lines=[]
 			for word in self.header_words:
@@ -123,7 +123,7 @@ class EnronLoader(object):
 			# 8. Replacing punctuation characters with space
 			cleanedContent =""
 			for char in content:
-				if char in self.punctuation_chars:
+				if char in self.punctuation_marks:
 					cleanedContent += " "
 				else:
 					cleanedContent += char
