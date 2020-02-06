@@ -286,6 +286,9 @@ class EnronLoader(object):
 
 Step 12 and 14 one charecter words and word with more than 40 characters are removed, these words are remaining data after several pre-processing steps and they will not
 provide information to classifer and can increase the vocabulary size.
+As it is mentioned earlier, some words are only present in ham or spam files which are mostly the name of Employees or companies.
+I decided to remove these words, to prevent classifier be overfitted over the dataset and to provide more accurate performance comparing different machine learning approaches.
+
 
 
 
