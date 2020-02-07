@@ -175,11 +175,37 @@ print("*** Multinomial Naive Bayes Classifer ***")
 classifier = MultinomialNB()
 classifier.fit(train_data, train_label)
 prediction = classifier.predict(test_data) 
+predoction_prob = classifier.predict_proba(test_data)
 test_conf = computeConfMatrix(prediction,test_label)
-test_hamF1Score, test_spamF1Score = performanceMetrics(test_conf)
-print("Test set, ham f1-score : %1.4f ,  spam f1-score : %1.4f " % (test_hamF1Score,test_spamF1Score))
-print("******")
+test_metrics = performanceMetrics(test_conf)
 
+
+thresholds = np.arange(0,1,0.02)
+FPR = np.zeros(len(thresholds))
+TPR = np.zeros(len(thresholds))
+for (i,th) in enumerate(thresholds):
+	prediction_th = (predoction_prob[:,1] > th)*1 # set threshold on probability along spam column: 0:ham, 1:spam
+	conf_th = computeConfMatrix(prediction_th,test_label) 
+	metrics_th = performanceMetrics(conf_th)
+	FPR[i] = metrics_th['FPR_spam']
+	TPR[i] = metrics_th['TPR_spam']
+
+
+plt.plot(FPR,TPR)
+plt.xlim([0,1.05])
+plt.ylim([0,1.05])
+plt.show()
+	
+		
+
+print("----Test set----")
+print(" ham class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_ham'],test_metrics['precision_ham'],test_metrics['recall_ham'],test_metrics['f1Score_ham']))
+print("spam class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_spam'],test_metrics['precision_spam'],test_metrics['recall_spam'],test_metrics['f1Score_spam']))
+print("----------------")
+
+
+
+print(stop)
 
 ########## Decision Tree Classifier
 print("*** Decision Tree Classifier ***")
