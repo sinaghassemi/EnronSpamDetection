@@ -194,7 +194,7 @@ In the next part, there might be E-mails that after preprocessing do not include
 The following is the histogram of number of words in both spam and ham folders after applying the preprocessing.
 As can be seen the emials which are truncated at 1000 words are very small portion of the data (less than 1 %).
 
-![vai](readme/vaihingen.png "The predicted segmentation map over an image of Vaihingen testset")
+![vai](readMe/ContentLenghts.png "The histogram")
 
 
 
