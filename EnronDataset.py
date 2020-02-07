@@ -15,10 +15,10 @@ class EnronLoader(object):
 		self.spamFiles = self.__filesToBeRead(spamDir)
 		self.hamFiles  = self.__filesToBeRead(hamDir)
 
-		self.spamFiles = self.spamFiles[:1000]
-		self.hamFiles = self.hamFiles[:1000]
+		self.spamFiles = self.spamFiles[:-1]
+		self.hamFiles = self.hamFiles[:-1]
 
-		# Punctuations to be removed
+		# Punctuation marks to be removed
 		self.punctuation_marks = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\
 		 '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~','\t']
 		# list of stop words
@@ -28,13 +28,12 @@ class EnronLoader(object):
 		'content-transfer-encoding:', 'x-from:', 'x-to:', 'x-cc:', 'x-bcc:', 'x-origin:', 'x-filename:', 'x-priority:', 'x-msmail-priority:',\
 		 'x-mimeole:','return-path:','delivered-to:','received:','x-mailer:','thread-index:','content-class:','x-mimeole:','x-originalarrivaltime:',\
 		'charset=','http://','by projecthoneypotmailserver','--=','clamdscan:','error:','alias:','=_nextpart_','href=','src=','size=','type=']
-		# Words in the following list will be eliminated if presented in data to avoid words which are only presented in one class (ham or spam) (distinctive words) 
+		# Words in the following list will be removed to avoid words which are only presented in one class (ham or spam) (distinctive words) 
 		self.distinctive_words = ['hou','kaminski', 'kevin', 'ena','vince', 'enron','stinson','shirley','squirrelmail','ect','smtp','mime','gif',\
 		'xls','mx','louise','ferc','ppin', 'wysak', 'tras', 'rien', 'saf', 'photoshop', 'viagra', 'cialis', 'xual', 'voip',\
-		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg',\
-		'ist', 'xp', 'secs', 'localhost', 'futurequest']
-		# if the number of words exceeded 5000, trunk the content
-		self.maxContentLength = 1000
+		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg','ist', 'slashnull', 'xp', 'localhost', 'dogma', 'authenticated','ees','esmtp','john','fw','postfix','xp','3a','steve','cs','mike','macromedia','http','secs', 'futurequest','scheduling']
+		# if the number of words exceeded maxContentLength, trunk the content
+		self.maxContentLength = kwargs.get('maxWords',1000)
 
 	def __filesToBeRead(self,path):
 	# function to return list of all files in leaves given a root tree directory
@@ -74,9 +73,10 @@ class EnronLoader(object):
 						break
 					elif word == self.header_words[-1]: # if word not in line and we check all the words, we  want that line
 						cleanedContent += (line + "\n ")		
-			content = cleanedContent
-								
-			# 3. Get rid of HTML commands, replacing them with space 
+			content = cleanedContent				
+			# 3. Get rid of HTML JAVA script
+			#content = re.sub(r"(?is)<(script|style).*?>.*?(</\1>)", "", content)
+			#content = re.sub(r"(?s)<!--(.*?)-->[\n]?", "", content)
 			content	= re.sub(">(.|\n)*?</","",content)
 			content	= re.sub("{(.|\n)*?}","",content)
 			content	= re.sub("<.*?>","",content)

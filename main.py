@@ -12,7 +12,6 @@ from LSTM import ClassifierLSTM
 from LogisticRegression import ClassifierLogisticRegression
 import random
 
-
 ###  To prevent different results on each run due to random generators 
 
 # this will seed torch's RNG for the main process, 
@@ -87,7 +86,6 @@ print("number of words in spam:%d and ham:%d" % (numAllWordsInSpam,numAllWordsIn
 wordSorted_spam, wordSortedCounts_spam  = wordCount(vocab_spam)
 wordSorted_ham , wordSortedCounts_ham   = wordCount(vocab_ham)
 wordSorted , wordSortedCounts   = wordCount(vocal_all)
-
 
 #### Visualization for words in spam and ham E-mails
 '''
@@ -169,34 +167,84 @@ val_label 	= lableList        [trainLength : trainLength+valLength]
 test_data    	= contentVectorized[trainLength+valLength:]
 test_label   	= lableList        [trainLength+valLength:]
 
+numHam_train 	= train_label.count(0)
+numSpam_train 	= train_label.count(1)
+numHam_val 	= val_label.count(0)
+numSpam_val 	= val_label.count(1)
+numHam_test 	= test_label.count(0)
+numSpam_test 	= test_label.count(1)
 
-########## Naive Bayes classifier
+'''
+### Ploting how spam and ham distributed on training / val / test sets
+width = 0.35
+plt.bar(0, numHam_train , width, color='b')
+plt.bar(0, numSpam_train, width,  bottom=numHam_train, color='r')
+
+plt.bar(1, numHam_val , width, color='b',label='Ham')
+plt.bar(1, numSpam_val, width,  bottom=numHam_val, color='r')
+
+plt.bar(2, numHam_test , width, color='b',label='Ham')
+plt.bar(2, numSpam_test, width,  bottom=numHam_test, color='r')
+plt.xticks([0,1,2],['Training','Validation','Test'])
+
+plt.ylabel('Number of E-mails')
+plt.legend(['Ham','Spam'])
+plt.title("Class distribution")
+plt.show()
+'''
+
+########################################################################
+##########     Naive Bayes Classifier       ############################
+########################################################################
+
 print("*** Multinomial Naive Bayes Classifer ***")
 classifier = MultinomialNB()
 classifier.fit(train_data, train_label)
+
 prediction = classifier.predict(test_data) 
-predoction_prob = classifier.predict_proba(test_data)
 test_conf = computeConfMatrix(prediction,test_label)
 test_metrics = performanceMetrics(test_conf)
 
+predoction_prob = classifier.predict_proba(test_data)
+FPR_NB ,TPR_NB = RoC(predoction_prob[:,1],test_label) 		
 
-thresholds = np.arange(0,1,0.02)
-FPR = np.zeros(len(thresholds))
-TPR = np.zeros(len(thresholds))
-for (i,th) in enumerate(thresholds):
-	prediction_th = (predoction_prob[:,1] > th)*1 # set threshold on probability along spam column: 0:ham, 1:spam
-	conf_th = computeConfMatrix(prediction_th,test_label) 
-	metrics_th = performanceMetrics(conf_th)
-	FPR[i] = metrics_th['FPR_spam']
-	TPR[i] = metrics_th['TPR_spam']
+print("----Test set----")
+print(" ham class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_ham'],test_metrics['precision_ham'],test_metrics['recall_ham'],test_metrics['f1Score_ham']))
+print("spam class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_spam'],test_metrics['precision_spam'],test_metrics['recall_spam'],test_metrics['f1Score_spam']))
+print("----------------")
 
+########################################################################
+##########     Decision Tree Classifier     ############################
+########################################################################
 
-plt.plot(FPR,TPR)
-plt.xlim([0,1.05])
-plt.ylim([0,1.05])
-plt.show()
-	
-		
+print("*** Decision Tree Classifier ***")
+classifier = DecisionTreeClassifier()			
+classifier.fit(train_data, train_label)
+
+prediction = classifier.predict(test_data)
+test_conf = computeConfMatrix(prediction,test_label)
+test_metrics = performanceMetrics(test_conf)
+
+predoction_prob = classifier.predict_proba(test_data)
+FPR_DT ,TPR_DT = RoC(predoction_prob[:,1],test_label) 
+print("----Test set----")
+print(" ham class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_ham'],test_metrics['precision_ham'],test_metrics['recall_ham'],test_metrics['f1Score_ham']))
+print("spam class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_spam'],test_metrics['precision_spam'],test_metrics['recall_spam'],test_metrics['f1Score_spam']))
+print("----------------")
+
+########################################################################
+##########        K-Nearest Neighbors       ############################
+########################################################################
+
+print("*** K-Nearest Neighbors Classifer ***")
+classifier = KNeighborsClassifier()			
+classifier.fit(train_data, train_label)
+prediction = classifier.predict(test_data)
+test_conf = computeConfMatrix(prediction,test_label)
+test_metrics = performanceMetrics(test_conf)
+
+predoction_prob = classifier.predict_proba(test_data)
+FPR_KN ,TPR_KN = RoC(predoction_prob[:,1],test_label) 
 
 print("----Test set----")
 print(" ham class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_ham'],test_metrics['precision_ham'],test_metrics['recall_ham'],test_metrics['f1Score_ham']))
@@ -204,34 +252,9 @@ print("spam class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : 
 print("----------------")
 
 
-
-print(stop)
-
-########## Decision Tree Classifier
-print("*** Decision Tree Classifier ***")
-classifier = DecisionTreeClassifier()			
-classifier.fit(train_data, train_label)
-prediction = classifier.predict(test_data)
-porbs = classifier.predict_proba(test_data) 
-test_conf = computeConfMatrix(prediction,test_label)
-test_hamF1Score, test_spamF1Score = performanceMetrics(test_conf)
-print("Test set, ham f1-score : %1.4f ,  spam f1-score : %1.4f " % (test_hamF1Score,test_spamF1Score))
-print("******")
-
-
-########## K-Nearest Neighbors
-print("*** K-Nearest Neighbors Classifer ***")
-classifier = KNeighborsClassifier()			
-classifier.fit(train_data, train_label)
-prediction = classifier.predict(test_data)
-porbs = classifier.predict_proba(test_data) 
-test_conf = computeConfMatrix(prediction,test_label)
-test_hamF1Score, test_spamF1Score = performanceMetrics(test_conf)
-print("Test set, ham f1-score : %1.4f ,  spam f1-score : %1.4f " % (test_hamF1Score,test_spamF1Score))
-print("******")
-
-
-##########  Logistic Regression Classifier
+########################################################################
+##########  Logistic Regression Classifier  ############################
+########################################################################
 print("*** Logistic Regression Classifer ***")
 
 # Data Loaders
@@ -244,32 +267,49 @@ test_loader  = EnronBatchLoader(data = torch.Tensor(test_data)	,label = torch.Te
 
 classifier = ClassifierLogisticRegression(batchSize = 32,outputSize = 1,   inputSize = BoW_size, device = 'cpu')
 best_spamF1Score = 0
-numEpoches_max = 10
+numEpoches_max = 100
 epoch = 0
 # if perfromance dose not imporve for certain number of consecutive epoches stop the training
-numEoches_stopCriteria = 20 
+numEoches_stopCriteria = 10 
 counter_stop = 0
 
 while (epoch < numEpoches_max) and (counter_stop < numEoches_stopCriteria):
 	# train 
 	classifier.train(train_loader)
 	# validation
-	hamF1Scorec, spamF1Score = classifier.predict(val_loader)
+	_,prediction = classifier.predict(val_loader)
+	# confusion matrix
+	val_conf = computeConfMatrix(prediction,val_label)
+	# performance metrics
+	val_metrics = performanceMetrics(val_conf)
 	# if performance on val improves then save best model and reset the stop counter
-	if spamF1Score > best_spamF1Score:
-		best_spamF1Score = spamF1Score 
+	if val_metrics['f1Score_spam'] > best_spamF1Score:
+		best_spamF1Score = val_metrics['f1Score_spam'] 
 		counter_stop = 0
 		classifier.saveWeights('bestModel_LL.pt')
 	else:
 		counter_stop += 1
 	epoch += 1
+
 # measure the performance of the best model on test set
 classifier.loadWeights('bestModel_LL.pt')
-hamF1Score, spamF1Score = classifier.predict(test_loader)
-print("Test set, ham f1-score : %1.4f ,  spam f1-score : %1.4f " % (hamF1Score,spamF1Score))
-print("******")
+predoction_prob, prediction = classifier.predict(test_loader)
+test_conf = computeConfMatrix(prediction,test_label)
+test_metrics = performanceMetrics(test_conf)
+FPR_LR ,TPR_LR = RoC(np.array(predoction_prob),test_label) 
 
-########## LSTM
+
+print("----Test set----")
+print(" ham class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_ham'],test_metrics['precision_ham'],test_metrics['recall_ham'],test_metrics['f1Score_ham']))
+print("spam class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_spam'],test_metrics['precision_spam'],test_metrics['recall_spam'],test_metrics['f1Score_spam']))
+print("----------------")
+
+
+
+########################################################################
+##########        Long Short Term Memory    ############################
+########################################################################
+
 print("*** Long Short Term Memory Classifer ***")
 # input data for lstm is extracted using a larger vocabulary which will then be embedded in lower dimentional space
 # as lstm can accept input of different sizes, we will not use bags of words, instead word embedding will be utilized
@@ -279,18 +319,14 @@ for content in contentList:
 	content_lengths += [length] 
 maxLength = max(content_lengths)
 
-'''
-plt.hist(np.array(content_lengths),bins=100)
-plt.title("Histogram - number of words")
-plt.show()
-'''
+
 # tokenization : split each content to a list of words
 contentTokenized = [] # list of contents splitted into list of words
 for content in contentList:
 	contentTokenized += [content.split()]	
 
 
-vocabSize = 7000
+vocabSize = 4000
 mostCommonWords = wordSorted[:vocabSize-2]
 vocab_indexing = {k:v+2 for (v,k) in enumerate(mostCommonWords)} # 0 : pad, 1: unknown(not in vocab)
 
@@ -319,7 +355,7 @@ print("maximum sequence length:%d" % maxLength)
 
 
 # spliting train / val / test
-lableList = torch.Tensor(lableList)
+#lableList = torch.Tensor(lableList)
 
 train_data   = content_tensor[:trainLength]
 train_label  =       lableList[:trainLength]
@@ -338,9 +374,9 @@ test_lengths= content_lengths[trainLength+valLength:]
 # Loaders
 
 batchSize = 256
-train_loader = EnronBatchLoader(data=train_data	,label=train_label	,seqLengths=train_lengths	,batchSize=batchSize,shuffle=True	,LSTM=True)
-val_loader   = EnronBatchLoader(data=val_data	,label=val_label	,seqLengths=val_lengths		,batchSize=batchSize,shuffle=False	,LSTM=True)
-test_loader  = EnronBatchLoader(data=test_data,	label=test_label	,seqLengths=test_lengths	,batchSize=batchSize,shuffle=False	,LSTM=True)
+train_loader = EnronBatchLoader(data=train_data	,label=torch.Tensor(train_label),seqLengths=train_lengths	,batchSize=batchSize,shuffle=True	,LSTM=True)
+val_loader   = EnronBatchLoader(data=val_data	,label=torch.Tensor(val_label)	,seqLengths=val_lengths		,batchSize=batchSize,shuffle=False	,LSTM=True)
+test_loader  = EnronBatchLoader(data=test_data,	label=torch.Tensor(test_label)	,seqLengths=test_lengths	,batchSize=batchSize,shuffle=False	,LSTM=True)
 
 
 # classfier
@@ -348,34 +384,76 @@ test_loader  = EnronBatchLoader(data=test_data,	label=test_label	,seqLengths=tes
 classifier = ClassifierLSTM(batchSize = batchSize,train_data = train_data,val_data = val_data,test_data = test_data,\
 		train_label = train_label,val_label = val_label,test_label=test_label,\
 		train_lengths = train_lengths, val_lengths = val_lengths, test_lengths = test_lengths,\
-		outputSize = 1, numLayers = 2, hiddenSize = 32, embedSize = 512, vocabSize = vocabSize,\
-		device = 'cpu')
+		outputSize = 1, numLayers = 2, hiddenSize = 64, embedSize = 512, vocabSize = vocabSize,\
+		device = 'cuda')
 
 best_spamF1Score = 0
-numEpoches_max = 2
+numEpoches_max = 100
 epoch = 0
 # if perfromance dose not imporve for certain number of consecutive epoches stop the training
-numEoches_stopCriteria = 5 
+numEoches_stopCriteria = 10 
 counter_stop = 0
 
 while (epoch < numEpoches_max) and (counter_stop < numEoches_stopCriteria):
 	# train 
-	classifier.train(train_loader)
+	prediction = classifier.train(train_loader)
 	# validation
-	hamF1Scorec, spamF1Score = classifier.predict(val_loader)
+	_,prediction,labels = classifier.predict(val_loader)
+	# confusion matrix
+	val_conf = computeConfMatrix(prediction,labels)
+	# performance metrics
+	val_metrics = performanceMetrics(val_conf)
 	# if performance on val improves then save best model and reset the stop counter
-	if spamF1Score > best_spamF1Score:
-		best_spamF1Score = spamF1Score 
+	if val_metrics['f1Score_spam'] > best_spamF1Score:
+		best_spamF1Score = val_metrics['f1Score_spam'] 
 		counter_stop = 0
 		classifier.saveWeights('bestModel_LSTM.pt')
 	else:
 		counter_stop += 1
 	epoch += 1
+
 # measure the performance of the best model on test set
 classifier.loadWeights('bestModel_LSTM.pt')
-hamF1Score, spamF1Score = classifier.predict(test_loader)
-print("Test set, ham f1-score : %1.4f ,  spam f1-score : %1.4f " % (hamF1Score,spamF1Score))
-print("******")
+predoction_prob,prediction,labels  = classifier.predict(test_loader)
+test_conf = computeConfMatrix(prediction,labels)
+test_metrics = performanceMetrics(test_conf)
+FPR_LSTM ,TPR_LSTM = RoC(np.array(predoction_prob),labels) 
+
+print("----Test set----")
+print(" ham class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_ham'],test_metrics['precision_ham'],test_metrics['recall_ham'],test_metrics['f1Score_ham']))
+print("spam class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_spam'],test_metrics['precision_spam'],test_metrics['recall_spam'],test_metrics['f1Score_spam']))
+print("----------------")
+
+
+
+ # Plotting RoC curve #
+plt.plot(FPR_NB,TPR_NB,label='Multinomial Naive Bayes',linewidth = 2)
+plt.plot(FPR_DT,TPR_DT,label='Decision Tree',linewidth = 2)
+plt.plot(FPR_KN,TPR_KN,label='K-Nearest Neighbors',linewidth = 2)
+plt.plot(FPR_LR,TPR_LR,label='Logistic Regression',linewidth = 2)
+plt.plot(FPR_LSTM,TPR_LSTM,label='LSTM',linewidth = 2)
+plt.legend(loc='lower right')
+plt.ylabel("True Positive Rate")
+plt.xlabel("False Positive Rate")
+plt.xlim([-0.01,0.4])
+plt.ylim([0.6,1.01])
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

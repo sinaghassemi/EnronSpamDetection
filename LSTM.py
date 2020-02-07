@@ -24,7 +24,7 @@ class ClassifierLSTM(object):
 		self.device = kwargs.get('device','cuda')
 		self.model = NetworkLSTM(**kwargs).to(self.device)
 		self.criterion = nn.BCELoss()
-		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.005)
+		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
 
 	def saveWeights(self,fileName):
 		torch.save(self.model.state_dict(),fileName)
@@ -35,6 +35,7 @@ class ClassifierLSTM(object):
 	def train(self,loader):
 		numMiniBatches = ceil(len(loader) / self.batchSize)
 		self.model.train()
+		predicted = []
 		for mini_batchNum , (minibatch_data,minibatch_label,minibatch_seqLength) in enumerate(loader):
 			minibatch_data = minibatch_data.to(self.device)
 			minibatch_label = minibatch_label.to(self.device)
@@ -50,10 +51,13 @@ class ClassifierLSTM(object):
 			nn.utils.clip_grad_norm_(self.model.parameters(), clip)
 			self.optimizer.step()
 			print("Train : MiniBatch[%3d/%3d]   Train loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()),end="\r")
+		return predicted
 	def predict(self,loader):
 		numMiniBatches = ceil(len(loader) / self.batchSize)
 		self.model.eval()
-		conf = np.zeros((2,2))
+		outputs = []
+		predicted = []
+		labels = []
 		for mini_batchNum , (minibatch_data,minibatch_label,minibatch_seqLength) in enumerate(loader):
 			minibatch_data = minibatch_data.to(self.device)
 			minibatch_label = minibatch_label.to(self.device)
@@ -61,13 +65,10 @@ class ClassifierLSTM(object):
 			output = self.model(minibatch_data, minibatch_seqLength)
 			loss = self.criterion(output, minibatch_label.float())
 			print("Val : MiniBatch[%3d/%3d]   Val loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()),end="\r")
-			predicted = (output.to('cpu')>0.5).numpy()
-			groundtruth = minibatch_label.to('cpu').numpy()
-			groundtruth = groundtruth.astype(np.int32)
-			minibatch_conf = computeConfMatrix(predicted,groundtruth)
-			conf += minibatch_conf
-		hamF1Score,spamF1Score =  performanceMetrics(conf)
-		return hamF1Score,spamF1Score
+			outputs += output.to('cpu').detach().numpy().squeeze().tolist()
+			predicted += (output.to('cpu')>0.5).numpy().squeeze().tolist()
+			labels += minibatch_label.to('cpu').numpy().astype(np.uint8).squeeze().tolist()
+		return outputs,predicted,labels
 
 class NetworkLSTM(nn.Module):
 	def __init__(self, **kwargs):
@@ -77,8 +78,8 @@ class NetworkLSTM(nn.Module):
 		self.hiddenSize = kwargs.get('hiddenSize',4)
 		embedSize = kwargs.get('embedSize',4)
 		vocabSize = kwargs.get('vocabSize',1000)
-		dropout = kwargs.get('dropout',0)
-		dropoutLSTM = kwargs.get('dropoutLSTM',0)
+		dropout = kwargs.get('dropout',0.2)
+		dropoutLSTM = kwargs.get('dropoutLSTM',0.2)
 		self.device = kwargs.get('device','cpu')
 		# embedding layer 
 		self.embedding = nn.Embedding(vocabSize, embedSize)
