@@ -23,7 +23,7 @@ But, first of all, to classify E-mails to spam and ham classes, we pre-process t
 # Pre-processing
 
 
-The goal of this project is to detect whether an E-mail is spam or not (ham) solely based on the content and the subject. Therefore, in pre-processing stage we remove all other parts of an email except subject and the body or the content. For reading and preprocessing the raw Enron-spam dataset, `Class EnronLoader` is provided as following in `EnronDataset.py`.
+The goal of this project is to detect whether an E-mail is spam or not (ham) solely based on the content and the subject. Therefore, in pre-processing stage we remove all other parts of an email except subject and the body or the content. For reading and preprocessing the raw Enron-spam dataset, `Class EnronLoader` is provided in `EnronDataset.py`.
 
 
 
@@ -35,34 +35,27 @@ class EnronLoader(object):
 		hamDir  = kwargs.get('hamDir')
 		if spamDir == None or hamDir == None:
 			raise NameError("the directory containing ham and spam should be provided")
-		self.spamFiles = self.__filesToBeRead(spamDir)
-		self.hamFiles  = self.__filesToBeRead(hamDir)
+		self.spamFiles = self._filesToBeRead(spamDir)
+		self.hamFiles  = self._filesToBeRead(hamDir)
 
 		# Punctuation marks to be removed
 		self.punctuation_marks = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\
-		 '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~','\t']
+		'/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~','\t']
 		# list of stop words
 		self.stopwords_list = stopwords.words('english')
 		# Lines including the header words will be eliminated
 		self.header_words = ['message-id:', 'date:', 'from:','sent:', 'to:','cc:','bcc', 'mime-version:', 'content-type:', \
 		'content-transfer-encoding:', 'x-from:', 'x-to:', 'x-cc:', 'x-bcc:', 'x-origin:', 'x-filename:', 'x-priority:', 'x-msmail-priority:',\
-		 'x-mimeole:','return-path:','delivered-to:','received:','x-mailer:','thread-index:','content-class:','x-mimeole:','x-originalarrivaltime:',\
+		'x-mimeole:','return-path:','delivered-to:','received:','x-mailer:','thread-index:','content-class:','x-mimeole:','x-originalarrivaltime:',\
 		'charset=','http://','by projecthoneypotmailserver','--=','clamdscan:','error:','alias:','=_nextpart_','href=','src=','size=','type=']
 		# Words in the following list will be removed to avoid words which are only presented in one class (ham or spam) (distinctive words) 
 		self.distinctive_words = ['hou','kaminski', 'kevin', 'ena','vince', 'enron','stinson','shirley','squirrelmail','ect','smtp','mime','gif',\
 		'xls','mx','louise','ferc','ppin', 'wysak', 'tras', 'rien', 'saf', 'photoshop', 'viagra', 'cialis', 'xual', 'voip',\
-		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg','ist', 'slashnull', 'xp', 'localhost', 'dogma', 'authenticated','ees','esmtp','john','fw','postfix','xp','3a','steve','cs','mike','macromedia','http']
+		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg','ist', 'slashnull', 'xp', 'localhost', 'dogma',\ 			'authenticated','ees','esmtp','john','fw','postfix','xp','3a','steve','cs','mike','macromedia','http','secs', 'futurequest','scheduling']
 		# if the number of words exceeded maxContentLength, trunk the content
 		self.maxContentLength = kwargs.get('maxWords',1000)
 ```
-
-To initilize the class, two keywords arguments namely ```spamDir``` and ```hamDir``` should be provided which locates the raw files belonging to spam and ham E-mails.
-Moreover, the punctuation marks is provided which will be removed from the content as they are not usefull for classification and take space in vocabulary.
-``` header_words ``` is the list of words which indicates lines in the E-mail which are not body and the subject, hence lines containing these words will be removed.
-To challenge the classification methods and their generalization capability, I also remove the most common words which are only present in one of the catagories(ham or spam),
-some of these words which are only present in ham E-mails are the name of Enron employees which the ham files are originated from, 
-or the words that are only seen in spam files are the name of the companies which have sent spam E-mails.
-Therefore, I decided to exclude these words to further challenge the classifiers and prevent overfitting on dataset. In the next part, we will see how these distintive words are chosen.
+To initilize the class, two keywords arguments `spamDir` and `hamDir` should be provided which locates the raw files belonging to spam and ham E-mails. Moreover, the punctuation marks is provided which will be removed from the content as they are not usefull for classification and take space in the vocabulary. ` header_words ` is the list of words indicating the lines in the E-mail which are not body and the subject such as 'message-id:' and 'date:'. To challenge the classification methods and their generalization capability, I also remove the most common words which are only present in one of the catagories(ham or spam), some of these words which are only present in ham E-mails are the name of Enron employees which the ham files are originated from,  or the words that are only seen in spam files are the name of the companies which have sent spam E-mails. Therefore, I decided to exclude these words to further challenge the classifiers and prevent overfitting on dataset. In the next part, we will see how these distintive words are chosen.
 
 ```python
 class EnronLoader(object):
@@ -70,7 +63,7 @@ class EnronLoader(object):
 	.
 	.
 
-	def __filesToBeRead(self,path):
+	def _filesToBeRead(self,path):
 	# function to return list of all files in leaves given a root tree directory
 		fileList = []
 		for root,dirs,files in os.walk(path):
@@ -81,17 +74,17 @@ class EnronLoader(object):
 
 	def readHam(self):
 		print('\n'+'*'*5 + 'reading ham files' + '*'*5)
-		content = self.__preprocess(self.hamFiles)
+		content = self._preprocess(self.hamFiles)
 		return content
 
 	def readSpam(self):
 		print('\n'+'*'*5 + 'reading spam files' + '*'*5)
-		content = self.__preprocess(self.spamFiles)
+		content = self._preprocess(self.spamFiles)
 		return content
 
 ```
 
-The class ```EnronLoader``` also includes a method ```__filesToBeRead(self,path)``` which returns the list of files given the root directory. Methods ```readHam(self)``` and ```readSpam(self)``` are used to read and preprocess all the files in ```spamDir``` and ```hamDir``` using  ```preprocess``` method.
+The class `EnronLoader` also includes a method `_filesToBeRead(self,path)` which returns the list of files given the root directory. Methods `readHam(self)` and `readSpam(self)` are used to read and preprocess all the files in `spamDir` and `hamDir` using  `preprocess` method.
 
 
 ```python
@@ -100,7 +93,7 @@ class EnronLoader(object):
 	.
 	.
 
-	def __preprocess(self,files_list):
+	def _preprocess(self,files_list):
 		content_list=[]
 		numOfFiles = len(files_list)
 		for (num_file,File) in enumerate(files_list):
@@ -189,80 +182,28 @@ class EnronLoader(object):
 					continue
 			content_list += [content]
 		return content_list
-
-
-pu
 ```
 
-The ```preprocess``` method read and process the raw content from a list of files using in 12 steps:
-first we convert all letters to lowercase, then lines that contain E-mail header such as message-id:, date:, from: are removed form the content preserving only body and the subject. In third step, regular expression are used to remove HTTP syntax as they will not contribute to the classification. In the following in step 4, 5, and 7 we replace any E-mail or Website address or any time and date or number with the words : 'emailaddrs' , 'webaddrs' , 'time', 'date, and 'number' respectively.
+The `preprocess` method read and process the raw content from a list of files using in 12 steps: first we convert all letters to lowercase, then lines that contain E-mail header such as message-id:, date:, from:, etc are removed form the content preserving only body and the subject. In third step, regular expression are used to remove HTTP syntax as they will not contribute to the classification. In the following in step 4, 5, and 7 we replace any E-mail or Website address or any time and date or number with the words : 'emailaddrs' , 'webaddrs' , 'time', 'date, and 'number' respectively.
 The logic behind this pre-processing is that the actual E-mail or website address or a number or a date will not provide information for detecting spam E-mails, and if it does, it will be limited to this dataset and will not contribute to the genralization of classifier. For instance, if in this dataset spam filters are coming from a certain number of companies, then the classifier will be trained to detect spam based on the web address of these comapanies which in real application it might not include all types of spam. In addition, using generelized term such as 'emailaddrs' for all E-mail addresses will prevent the unnecessary increase of the vocabulary size.
-In the next lines of code, the punctuation marks, mutiple cosecutive spaces are eliminated from the content.
-Stop words such as: whom, this, that, ... which can not provide useful information are also removed in pre-processing. After these cleaning attempts, there might remained some meaningless one character words or very long words, therefore we remove these words by setting boundary for word length.
-In the next part, there might be E-mails that after preprocessing do not include any words which will not be considered. In the other hand, some E-mails contain a huge number of words, as we will see in next part, to prevent very large input demension for LSTM classifier, we set a upper bpundary for number of words in the E-mail, E-mail which exceed this boundary will be truncate.
+In the next lines of code, the punctuation marks, mutiple cosecutive spaces are eliminated from the content. 
+Stop words such as: whom, this, that, ... which can not provide useful information are also removed in pre-processing. 
+After these cleaning attempts, there might remained some meaningless one character words or very long words, therefore we remove these words by setting boundary for word length.
+In the next part, there might be E-mails that after preprocessing do not include any words which will not be considered. In the other hand, some E-mails contain a huge number of words, as we will see in the next part, to prevent very large input demension for LSTM classifier, we set a upper bpundary for number of words in the E-mail, E-mail which exceed this boundary will be truncated.
 
 The following is the histogram of number of words in both spam and ham folders after applying the preprocessing.
-As can be seen the emials which are truncated at 1000 words are very small portion of the data (less than 1 %).
+As can be seen the emials which are truncated at 1000 words are very small portion of the data (less than 1 %) hence we will not loss information by setting boundary on number of E-mail words.
 
 ![vai](readMe/ContentLenghts.png "The histogram")
 
 
 
 
-```python
-class EnronLoader(object):
-	.
-	.
-	.
-
-	def __preprocess(self,files_list):
-		.
-		.
-		.
-		.
-			# 3. Splitting the content based on lines, and removing fields except body and subject
-			content = content.split("\n")
-			redundant_lines=[]
-			for word in self.header_words:
-				for line_num,line in enumerate(content):
-					if word in line:
-						redundant_lines +=[line_num]
-						#break # go for the next word
-			cleanedContent=""
-			for line_num,line in enumerate(content):
-				if line_num not in redundant_lines:
-					cleanedContent += (line + "\n ")
-			content = cleanedContent					
-			# 4. Get rid of HTML commands, replacing them with space 
-			cleanedContent	= re.sub(">(.|\n)*?</","",content)
-			cleanedContent	= re.sub("{(.|\n)*?}","",cleanedContent)
-			cleanedContent	= re.sub("<.*?>","",cleanedContent)
-			cleanedContent  = re.sub("&.*?;","",cleanedContent)
-			cleanedContent	= re.sub("=[0-9]*","",cleanedContent)		
-			content = cleanedContent
-			# 5. Replace E-mail address with word "emailaddrs"
-			cleanedContent=""
-			for word in content.split():
-				if "@" in word:
-					#print(word)
-					cleanedContent += "emailaddrs "
-				else:
-					cleanedContent += word + " "
-			content = cleanedContent
-			# 6. Replace Website address with word "webaddrs"
-			cleanedContent=""
-			for word in content.split():
-				if (("http:" in word) or (".com" in word)):
-					cleanedContent += "webaddrs "
-				else:
-					cleanedContent += word + " "
-			content = cleanedContent
-
-```
 
 
 
-# 2. Feature selection
+
+# Feature selection
 
 # 3. Methods
 
