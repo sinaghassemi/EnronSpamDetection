@@ -27,7 +27,7 @@ The goal of this project is to detect whether an E-mail is spam or not (ham) sol
 
 
 
-`python
+```python
 
 class EnronLoader(object):
 	def __init__(self,**kwargs):
@@ -54,7 +54,7 @@ class EnronLoader(object):
 		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg','ist', 'slashnull', 'xp', 'localhost', 'dogma', 'authenticated','ees','esmtp','john','fw','postfix','xp','3a','steve','cs','mike','macromedia','http']
 		# if the number of words exceeded maxContentLength, trunk the content
 		self.maxContentLength = kwargs.get('maxWords',1000)
-`
+```
 
 To initilize the class, two keywords arguments namely ```spamDir``` and ```hamDir``` should be provided which locates the raw files belonging to spam and ham E-mails.
 Moreover, the punctuation marks is provided which will be removed from the content as they are not usefull for classification and take space in vocabulary.
