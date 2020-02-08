@@ -25,7 +25,6 @@ def extractVocab(content):
 			dict_vocab[word] = 1
 	return 	dict_vocab
 
-
 def wordCount(dict_vocab):
 	'''
 	Takes vocabulary dictionary as arg,
@@ -44,19 +43,18 @@ def wordCount(dict_vocab):
 
 
 
-def computeConfMatrix(classifierOutputs,groundtruthList):
+def computeConfMatrix(predictions,labels):
 	'''
-	Takes classifierOutputs and groundtruthList
-	as arg in shape of 1D numpy array with size of num of samples
+	Takes predictions and labels
+	as arg in shape of 1D array with size of num of samples
 	Return Confusion matrix
 	'''
 	confusionMatrix = np.zeros((2,2))
-	for i in range(len(classifierOutputs)):
-		predicted = classifierOutputs[i]
-		groundtruth = groundtruthList[i]
+	for i in range(len(predictions)):
+		predicted = predictions[i]
+		groundtruth = labels[i]
 		confusionMatrix[predicted][groundtruth] += 1
 	return confusionMatrix
-
 
 def div(a,b):
 	'''
@@ -103,21 +101,19 @@ def performanceMetrics(confusionMatrix):
 
 	return metrics
 
-
-def RoC(prediction_prob,test_label):
+def ROC(predictions_prob,labels):
 	'''
 	Takes prediction probabilities and actual ground truths (for spam class)
 	as arg in shape of 1D numpy array with size of num of samples
 	Returns false positive and true positive rate for a set of thresholds
 	'''
-
 	thresholds = np.arange(0,1,0.02)
 	FPR = np.zeros(len(thresholds))
 	TPR = np.zeros(len(thresholds))
 	for (i,th) in enumerate(thresholds):
 		# set threshold on probability along spam column: 0:ham, 1:spam
-		prediction_th = (prediction_prob > th)*1 
-		conf_th = computeConfMatrix(prediction_th,test_label) 
+		predictions_th = (predictions_prob > th)*1 
+		conf_th = computeConfMatrix(predictions_th,labels) 
 		metrics_th = performanceMetrics(conf_th)
 		FPR[i] = metrics_th['FPR_spam']
 		TPR[i] = metrics_th['TPR_spam']

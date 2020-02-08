@@ -206,7 +206,7 @@ test_conf = computeConfMatrix(prediction,test_label)
 test_metrics = performanceMetrics(test_conf)
 
 predoction_prob = classifier.predict_proba(test_data)
-FPR_NB ,TPR_NB = RoC(predoction_prob[:,1],test_label) 		
+FPR_NB ,TPR_NB = ROC(predoction_prob[:,1],test_label) 		
 
 print("----Test set----")
 print(" ham class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_ham'],test_metrics['precision_ham'],test_metrics['recall_ham'],test_metrics['f1Score_ham']))
@@ -226,7 +226,7 @@ test_conf = computeConfMatrix(prediction,test_label)
 test_metrics = performanceMetrics(test_conf)
 
 predoction_prob = classifier.predict_proba(test_data)
-FPR_DT ,TPR_DT = RoC(predoction_prob[:,1],test_label) 
+FPR_DT ,TPR_DT = ROC(predoction_prob[:,1],test_label) 
 print("----Test set----")
 print(" ham class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_ham'],test_metrics['precision_ham'],test_metrics['recall_ham'],test_metrics['f1Score_ham']))
 print("spam class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_spam'],test_metrics['precision_spam'],test_metrics['recall_spam'],test_metrics['f1Score_spam']))
@@ -244,7 +244,7 @@ test_conf = computeConfMatrix(prediction,test_label)
 test_metrics = performanceMetrics(test_conf)
 
 predoction_prob = classifier.predict_proba(test_data)
-FPR_KN ,TPR_KN = RoC(predoction_prob[:,1],test_label) 
+FPR_KN ,TPR_KN = ROC(predoction_prob[:,1],test_label) 
 
 print("----Test set----")
 print(" ham class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_ham'],test_metrics['precision_ham'],test_metrics['recall_ham'],test_metrics['f1Score_ham']))
@@ -296,7 +296,7 @@ classifier.loadWeights('bestModel_LL.pt')
 predoction_prob, prediction = classifier.predict(test_loader)
 test_conf = computeConfMatrix(prediction,test_label)
 test_metrics = performanceMetrics(test_conf)
-FPR_LR ,TPR_LR = RoC(np.array(predoction_prob),test_label) 
+FPR_LR ,TPR_LR = ROC(np.array(predoction_prob),test_label) 
 
 
 print("----Test set----")
@@ -417,7 +417,7 @@ classifier.loadWeights('bestModel_LSTM.pt')
 predoction_prob,prediction,labels  = classifier.predict(test_loader)
 test_conf = computeConfMatrix(prediction,labels)
 test_metrics = performanceMetrics(test_conf)
-FPR_LSTM ,TPR_LSTM = RoC(np.array(predoction_prob),labels) 
+FPR_LSTM ,TPR_LSTM = ROC(np.array(predoction_prob),labels) 
 
 print("----Test set----")
 print(" ham class accuracy : %1.4f, precision: %1.4f, recall: %1.4f, f1-score : %1.4f" % (test_metrics['acc_ham'],test_metrics['precision_ham'],test_metrics['recall_ham'],test_metrics['f1Score_ham']))
@@ -426,7 +426,7 @@ print("----------------")
 
 
 
- # Plotting RoC curve #
+ # Plotting ROC curve #
 plt.plot(FPR_NB,TPR_NB,label='Multinomial Naive Bayes',linewidth = 2)
 plt.plot(FPR_DT,TPR_DT,label='Decision Tree',linewidth = 2)
 plt.plot(FPR_KN,TPR_KN,label='K-Nearest Neighbors',linewidth = 2)
