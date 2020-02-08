@@ -658,7 +658,7 @@ contentList_spam = dataLoader.readSpam()
 contentList_ham = dataLoader.readHam()
 ```
 
-Then we locate where ham and spam files are, and we select the size of our bags of words. The bags of words is used as features for the naive bayes, k-NN, decision tree and logistic regression classifers. EnronLoader class is used to load and pre-process data as it is detaild in [pre-processing section](# Pre-processing)
+Then we locate where ham and spam files are, and we select the size of our bags of words. The bags of words is used as features for the naive bayes, k-NN, decision tree and logistic regression classifers. EnronLoader class is used to load and pre-process data as it is detaild in [pre-processing section](#-Pre-processing)
 
 
 
