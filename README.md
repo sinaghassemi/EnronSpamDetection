@@ -13,7 +13,7 @@ The codes organized as following :
 
 
 The methods used for spam classification are : Decision Tree, Multinomial Naive Bayes, K-Nearest Neighbors classifiers (scikit-learn) and also Logistic Regression and LSTM (PyTorch).
-For extracting the features for all classifiers except LSTM, we use bags of words method in which we selected a number of most common words in E-mails (after pre-processing), and for each E-mail in the dataset we count the number of selected words in that E-mail hence our data would be two dimentional array where the number of rows is the number of samples and the number of columns is the number of select words (words in the bag). However, as we will see in the next parts, since LSTM can takes sequence input of different sizes, we use word embedding techniuqe for extracting features for LSTM calssifier.
+For extracting the features for all classifiers except LSTM, we use bag of words method in which we selected a number of most common words in E-mails (after pre-processing), and for each E-mail in the dataset we count the number of selected words in that E-mail hence our data would be two dimentional array where the number of rows is the number of samples and the number of columns is the number of select words (words in the bag). However, as we will see in the next parts, since LSTM can takes sequence input of different sizes, we use word embedding techniuqe for extracting features for LSTM calssifier.
 
 The classifcation performance is measured using accuracy, precision, recall, and f1-score for both spam and ham classes as well as RoC curves for all classifiers.
 
@@ -658,7 +658,7 @@ contentList_spam = dataLoader.readSpam()
 contentList_ham = dataLoader.readHam()
 ```
 
-Then we locate where ham and spam files are, and we select the size of our bags of words. The bags of words is used to extract features for the naive bayes, k-NN, decision tree and logistic regression classifers. Next, `EnronLoader` class is used to load and pre-process data as it is detaild in [pre-processing section](#-Pre-processing). It returns two lists of pre-processed contents form spam and ham folders.
+Then we locate where ham and spam files are, and we select the size of our bag of words. The bag of words is used to extract features for the naive bayes, k-NN, decision tree and logistic regression classifers. Next, `EnronLoader` class is used to load and pre-process data as it is detaild in [pre-processing section](#-Pre-processing). It returns two lists of pre-processed contents form spam and ham folders.
 
 
 ```python
@@ -775,15 +775,15 @@ for i in range(BoW_size):
 #################################################################################
 ```
 
-Next, we use python sets to see how the words intersect in ham and spam files with the most common words, as we have mentioned, we don't want the words in our bags of words which are only present in one of the classes. This would cause the classifier be overfitted only on Enron datasets. 
-In the end, we print all words we have chosen in the bags of words with their corresponding count in the ham and spam data.
+Next, we use python sets to see how the words intersect in ham and spam files with the most common words, as we have mentioned, we don't want the words in our bag of words which are only present in one of the classes. This would cause the classifier be overfitted only on Enron datasets. 
+In the end, we print all words we have chosen in the bag of words with their corresponding count in the ham and spam data.
 
 
 
 ```python
 ########### Preparing the dataset for training the classifiers ##################
 # Here we define the words to be used as features
-# we a number of most common words , it can be thought as bags of words 
+# we a number of most common words , it can be thought as bag of words 
 mostCommonWords = wordSorted[:BoW_size]
 
 # Defining a dictionar whose keys are most common words and values are the indexes
@@ -804,7 +804,7 @@ for (row,content) in enumerate(contentTokenized):
 
 ```
 
-Next, we perform tokenization and vectorization for the bags of words approach: first we split the contents into words then the words are assigned an integer index from a python dictionary whose keys are words and values are the indexes.
+Next, we perform tokenization and vectorization for the bag of words approach: first we split the contents into words then the words are assigned an integer index from a python dictionary whose keys are words and values are the indexes.
 
 
 
@@ -851,11 +851,291 @@ plt.show()
 #################################################################################
 ```
 
-Then, we split the dataset to trianing, validation, and test set using a ratio of 50, 25, and 25 %.
+Then, we split the dataset into trianing, validation, and test sets using a ratio of 50, 25, and 25 % respectively.
 Next we plot how ham and spam classes are distributed in these datasets.
 
+![vai](readMe/hamSpamClasses.png "Training/Validation/Test sets")
 
-![vai](readMe/ContentLenghts.png "The histogram")
+
+```python
+########################################################################
+##########     Naive Bayes Classifier       ############################
+########################################################################
+
+print("*** Multinomial Naive Bayes Classifer ***")
+classifier = MultinomialNB()
+classifier.fit(train_data, train_label)
+
+prediction = classifier.predict(test_data) 
+test_conf = computeConfMatrix(prediction,test_label)
+test_metrics = performanceMetrics(test_conf)
+
+predoction_prob = classifier.predict_proba(test_data)
+FPR_NB ,TPR_NB = ROC(predoction_prob[:,1],test_label) 		
+
+```
+
+First classifaction approach is naive Bayes classifier, as its name implies it uses Bayes' theorem and with the assumption that the features (in our case selected words counts) are independent.
+We used multinomial naive Bayes classifer where the probability distrution of each feature follows the multinomial distribution where we count number of words in our bag of words.
+Although it is regarded as one of the simplest classifiers, it shows relatively good classification performance for text classifiation.
+
+Same as all sklearn classifiers, first we fit the classfier on the training data then the classifier is applied over the test set. The predicted outputs and also the probabilities are then used to measure the performance metrics which will be seen in the following parts.
+
+
+
+```python
+########################################################################
+##########     Decision Tree Classifier     ############################
+########################################################################
+
+print("*** Decision Tree Classifier ***")
+classifier = DecisionTreeClassifier()
+classifier.fit(train_data, train_label)
+
+prediction = classifier.predict(test_data)
+test_conf = computeConfMatrix(prediction,test_label)
+test_metrics = performanceMetrics(test_conf)
+
+predoction_prob = classifier.predict_proba(test_data)
+FPR_DT ,TPR_DT = ROC(predoction_prob[:,1],test_label) 
+
+```
+
+Second classifer is decision tree, a decision tree construct a flow-chart structure (tree) in which each internal node assigned a test/rule on a feature, the two outgoing branches represnt the outcome of that test (true and flase) and in the end the leaf nodes determine the class of the data. During the trainig, these rules and their corresponding threshold are learned by a criterion by minimizing gini or entropy according to the representation of the tree.
+
+Same as all sklearn classifiers, first we fit the classfier on the training data then the classifier is applied over the test set. The predicted outputs and also the probabilities are then used to measure the performance metrics which will be seen in the following parts. Probabilities here are just the fraction of training samples of the same class in a the leaf.
+
+
+
+
+```python
+########################################################################
+##########        K-Nearest Neighbors       ############################
+########################################################################
+
+print("*** K-Nearest Neighbors Classifer ***")
+classifier = KNeighborsClassifier()			
+classifier.fit(train_data, train_label)
+prediction = classifier.predict(test_data)
+test_conf = computeConfMatrix(prediction,test_label)
+test_metrics = performanceMetrics(test_conf)
+
+predoction_prob = classifier.predict_proba(test_data)
+FPR_KN ,TPR_KN = ROC(predoction_prob[:,1],test_label) 
+
+```
+
+K-Nearest Neighbors classifier is used next. The main idea behind nearest neighbor classifer is to find a number of training samples closest in distance to the test sample point, and predict the label from these training samples usually by measuring standard Euclidean distance. This approach can be regarded as non-generalizing machine learning method, since they simply memorize all of its training data during inference. 
+
+Same as all sklearn classifiers, first we fit the classfier on the training data then the classifier is applied over the test set. The predicted outputs and also the probabilities are then used to measure the performance metrics which will be seen in the following parts. Probabilities here are just the fraction of nearest neighbors of the same class in k-nearest neighbors.
+
+
+
+```python
+
+########################################################################
+##########  Logistic Regression Classifier  ############################
+########################################################################
+print("*** Logistic Regression Classifer ***")
+
+# Data Loaders
+batchSize = 32
+train_loader = EnronBatchLoader(data = torch.Tensor(train_data)	,label = torch.Tensor(train_label)	,batchSize=batchSize	,shuffle=True)
+val_loader   = EnronBatchLoader(data = torch.Tensor(val_data)	,label = torch.Tensor(val_label)	,batchSize=batchSize	,shuffle=False)
+test_loader  = EnronBatchLoader(data = torch.Tensor(test_data)	,label = torch.Tensor(test_label)	,batchSize=batchSize	,shuffle=False)	
+
+# Classifier
+
+classifier = ClassifierLogisticRegression(batchSize = 32,outputSize = 1,   inputSize = BoW_size, device = 'cpu')
+best_spamF1Score = 0
+numEpoches_max = 1000
+epoch = 0
+# if perfromance dose not imporve for certain number of consecutive epoches stop the training
+numEoches_stopCriteria = 10 
+counter_stop = 0
+
+while (epoch < numEpoches_max) and (counter_stop < numEoches_stopCriteria):
+	# train 
+	classifier.train(train_loader)
+	# validation
+	_,prediction = classifier.predict(val_loader)
+	# confusion matrix
+	val_conf = computeConfMatrix(prediction,val_label)
+	# performance metrics
+	val_metrics = performanceMetrics(val_conf)
+	# if performance on val improves then save best model and reset the stop counter
+	if val_metrics['f1Score_spam'] > best_spamF1Score:
+		best_spamF1Score = val_metrics['f1Score_spam'] 
+		counter_stop = 0
+		classifier.saveWeights('bestModel_LL.pt')
+	else:
+		counter_stop += 1
+	epoch += 1
+
+# measure the performance of the best model on test set
+classifier.loadWeights('bestModel_LL.pt')
+predoction_prob, prediction = classifier.predict(test_loader)
+test_conf = computeConfMatrix(prediction,test_label)
+test_metrics = performanceMetrics(test_conf)
+FPR_LR ,TPR_LR = ROC(np.array(predoction_prob),test_label) 
+
+```
+
+Then, we used logistic regression for the classification. Logistic regression is a linear classification model in which the probabilities are predicted using logistic function such as sigmoid.
+We constrcut the model using fully connect layer in pytorch along with a sigmoid layer. 
+
+
+For training, the model is trained for a number of epoches, for each epoch after the model is trained, its perfroamce is measure over the validation set. If the performance does not improved for a certain number of consecutive epochs, the training will be terminated. The weights of the model with the best performance on the validation set is used to measure the peroformance on the test set.
+
+
+
+
+```python
+########################################################################
+##########        Long Short Term Memory    ############################
+########################################################################
+print("*** Long Short Term Memory Classifer ***")
+# input data for lstm is extracted using a larger vocabulary which will then be embedded in lower dimentional space
+# as lstm can accept input of different sizes, we will not use bag of words, instead word embedding will be utilized
+content_lengths = []
+for content in contentList:
+	length = len(content.split())
+	content_lengths += [length] 
+maxLength = max(content_lengths)
+
+
+# tokenization : split each content to a list of words
+contentTokenized = [] # list of contents splitted into list of words
+for content in contentList:
+	contentTokenized += [content.split()]	
+
+
+vocabSize = 8000
+mostCommonWords = wordSorted[:vocabSize-2]
+vocab_indexing = {k:v+2 for (v,k) in enumerate(mostCommonWords)} # 0 : pad, 1: unknown(not in vocab)
+
+
+# indexing word in tokenized content
+
+contentIndexed = [] # list of content:list of indexes	
+for content in contentTokenized:
+	c_indexed = []
+	for word in content:
+		word_index = vocab_indexing.get(word,1)
+		c_indexed += [word_index]
+	contentIndexed += [c_indexed]
+
+# now padding zeros data tensor will have n_samples x maxLength size
+content_tensor = torch.zeros((numOfSamples,maxLength)).long()
+
+for index in range(numOfSamples):
+	contentLength = content_lengths[index]
+	content_tensor[index,:contentLength] = torch.LongTensor(contentIndexed[index])
+
+content_lengths = torch.LongTensor(content_lengths)
+
+print("maximum sequence length:%d" % maxLength)
+
+
+
+# spliting train / val / test
+#lableList = torch.Tensor(lableList)
+
+train_data   = content_tensor[:trainLength]
+train_label  =       lableList[:trainLength]
+train_lengths= content_lengths[:trainLength]
+
+val_data  = content_tensor[trainLength : trainLength+valLength]
+val_label = lableList      [trainLength : trainLength+valLength]
+val_lengths= content_lengths[trainLength : trainLength+valLength]
+
+test_data  = content_tensor[trainLength+valLength:]
+test_label = lableList      [trainLength+valLength:]
+test_lengths= content_lengths[trainLength+valLength:]	
+```
+
+As it has been described in [LSTM classifier section](#-LSTM-Classifier), since LSTM can model sequnce with differnt length, for LSTM classifier we will use word embedding as the feature extraction part instead of bag of words approach. So the sequence length of each sample (number of words in each E-mail) is required as well during training.
+Same as previous approaches, we tokenize and vectorize the content where E-mail contents is splitted into words and each word is given an index based on a vocabulary.
+However, since the size of the LSTM input will not be defined by vocanulary size and it will be defined by the embedding dimensions, the size of vocabulary here is much larger compared to bag of words size used in previous approaches.
+Then the sequence/content will be padded with zeros to form a tensor where the number of rows is the number of samples and the number of columns is the maximum lenght of the contents (maximum words in the E-mail in the dataset). As is described in the [pre-processing section](#-Pre-processing), the muximum words in an E-mail is set to be 1000 words.
+Then such tensor is splitted to training, validation and test sets.
+
+
+```python
+# LSTM
+
+# Loaders
+
+batchSize = 256
+train_loader = EnronBatchLoader(data=train_data	,label=torch.Tensor(train_label),seqLengths=train_lengths	,batchSize=batchSize,shuffle=True	,LSTM=True)
+val_loader   = EnronBatchLoader(data=val_data	,label=torch.Tensor(val_label)	,seqLengths=val_lengths		,batchSize=batchSize,shuffle=False	,LSTM=True)
+test_loader  = EnronBatchLoader(data=test_data,	label=torch.Tensor(test_label)	,seqLengths=test_lengths	,batchSize=batchSize,shuffle=False	,LSTM=True)
+
+
+# classfier
+
+classifier = ClassifierLSTM(batchSize = batchSize,train_data = train_data,val_data = val_data,test_data = test_data,\
+		train_label = train_label,val_label = val_label,test_label=test_label,\
+		train_lengths = train_lengths, val_lengths = val_lengths, test_lengths = test_lengths,\
+		outputSize = 1, numLayers = 2, hiddenSize = 64, embedSize = 512, vocabSize = vocabSize,\
+		device = 'cpu')
+
+best_spamF1Score = 0
+numEpoches_max = 1000
+epoch = 0
+# if perfromance dose not imporve for certain number of consecutive epoches stop the training
+numEoches_stopCriteria = 10 
+counter_stop = 0
+
+while (epoch < numEpoches_max) and (counter_stop < numEoches_stopCriteria):
+	# train 
+	prediction = classifier.train(train_loader)
+	# validation
+	_,prediction,labels = classifier.predict(val_loader)
+	# confusion matrix
+	val_conf = computeConfMatrix(prediction,labels)
+	# performance metrics
+	val_metrics = performanceMetrics(val_conf)
+	# if performance on val improves then save best model and reset the stop counter
+	if val_metrics['f1Score_spam'] > best_spamF1Score:
+		best_spamF1Score = val_metrics['f1Score_spam'] 
+		counter_stop = 0
+		classifier.saveWeights('bestModel_LSTM.pt')
+	else:
+		counter_stop += 1
+	epoch += 1
+
+# measure the performance of the best model on test set
+classifier.loadWeights('bestModel_LSTM.pt')
+predoction_prob,prediction,labels  = classifier.predict(test_loader)
+test_conf = computeConfMatrix(prediction,labels)
+test_metrics = performanceMetrics(test_conf)
+FPR_LSTM ,TPR_LSTM = ROC(np.array(predoction_prob),labels) 
+
+```
+
+Same as logistic regression model, during training, the model is trained for a number of epoches where in each epoch after the model is trained, its perfroamce is measure over the validation set. If the performance does not improved for a certain number of consecutive epochs, the training will be terminated. The weights of the model with the best performance on the validation set is used to measure the peroformance on the test set.
+
+
+```python 
+ # Plotting ROC curve #
+plt.plot(FPR_NB,TPR_NB,label='Multinomial Naive Bayes',linewidth = 2)
+plt.plot(FPR_DT,TPR_DT,label='Decision Tree',linewidth = 2)
+plt.plot(FPR_KN,TPR_KN,label='K-Nearest Neighbors',linewidth = 2)
+plt.plot(FPR_LR,TPR_LR,label='Logistic Regression',linewidth = 2)
+plt.plot(FPR_LSTM,TPR_LSTM,label='LSTM',linewidth = 2)
+plt.legend(loc='lower right')
+plt.ylabel("True Positive Rate")
+plt.xlabel("False Positive Rate")
+plt.xlim([-0.01,0.4])
+plt.ylim([0.6,1.01])
+plt.show()
+```
+
+
+At the end, we compare the resuts of different methods over the ROC curves.
+
+
 
 
 
