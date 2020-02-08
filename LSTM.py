@@ -12,15 +12,6 @@ from math import ceil
 class ClassifierLSTM(object):
 	def __init__(self,**kwargs):
 		self.batchSize 	= kwargs.get('batchSize',256)
-		train_data 	= kwargs.get('train_data',None)
-		val_data 	= kwargs.get('val_data',None)
-		test_data 	= kwargs.get('test_data',None)
-		train_label 	= kwargs.get('train_label',None)
-		val_label 	= kwargs.get('val_label',None)
-		test_label 	= kwargs.get('test_label',None)
-		train_lengths 	= kwargs.get('train_lengths',None)
-		val_lengths 	= kwargs.get('val_lengths',None)
-		test_lengths 	= kwargs.get('test_lengths',None)
 		self.device = kwargs.get('device','cuda')
 		self.model = NetworkLSTM(**kwargs).to(self.device)
 		self.criterion = nn.BCELoss()
@@ -35,7 +26,6 @@ class ClassifierLSTM(object):
 	def train(self,loader):
 		numMiniBatches = ceil(len(loader) / self.batchSize)
 		self.model.train()
-		predicted = []
 		for mini_batchNum , (minibatch_data,minibatch_label,minibatch_seqLength) in enumerate(loader):
 			minibatch_data = minibatch_data.to(self.device)
 			minibatch_label = minibatch_label.to(self.device)
@@ -51,7 +41,6 @@ class ClassifierLSTM(object):
 			nn.utils.clip_grad_norm_(self.model.parameters(), clip)
 			self.optimizer.step()
 			print("Train : MiniBatch[%3d/%3d]   Train loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()),end="\r")
-		return predicted
 	def predict(self,loader):
 		numMiniBatches = ceil(len(loader) / self.batchSize)
 		self.model.eval()
