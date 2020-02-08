@@ -10,8 +10,12 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import torch
 
 
-# Takes content and return vocab dictionary where keys are words and values are words count
 def extractVocab(content):
+	'''
+	Takes content as arg,
+	Returns vocabulary dictionary
+	where keys are words and values are words count
+	'''
 	dict_vocab = {}
 	content_splitted = content.split(" ")
 	for word in content_splitted:
@@ -21,8 +25,13 @@ def extractVocab(content):
 			dict_vocab[word] = 1
 	return 	dict_vocab
 
-# Takes vocab dictionary and return two list of words and their count which are sorted based on words count
+
 def wordCount(dict_vocab):
+	'''
+	Takes vocabulary dictionary as arg,
+	Returns two list : 1. words  2. words count
+	which are sorted based on words count
+	'''
 	words_sorted = []
 	counts_sorted = []
 	dict_vocab_counts = list(dict_vocab.values())
@@ -33,7 +42,14 @@ def wordCount(dict_vocab):
 		counts_sorted += [dict_vocab_counts[i]]
 	return words_sorted,counts_sorted
 
+
+
 def computeConfMatrix(classifierOutputs,groundtruthList):
+	'''
+	Takes classifierOutputs and groundtruthList
+	as arg in shape of 1D numpy array with size of num of samples
+	Return Confusion matrix
+	'''
 	confusionMatrix = np.zeros((2,2))
 	for i in range(len(classifierOutputs)):
 		predicted = classifierOutputs[i]
@@ -43,12 +59,22 @@ def computeConfMatrix(classifierOutputs,groundtruthList):
 
 
 def div(a,b):
+	'''
+	To prevent division by zero,
+	Return 0 instead
+	'''
 	if b == 0:
 		return 0
 	else:
 		return a/b
 
 def performanceMetrics(confusionMatrix):
+	'''
+	Takes Confusion Matrix as arg (0: ham , 1:spam),
+	Returns some performance matrix:
+	accuracy, precision, recall, f1-Score, false positive rate, true positive rate
+	and for both spam and ham class
+	'''
 	# For Ham Class
 	TP_ham = confusionMatrix[0][0]
 	TN_ham = confusionMatrix[1][1]
@@ -78,13 +104,19 @@ def performanceMetrics(confusionMatrix):
 	return metrics
 
 
-def RoC(predoction_prob,test_label):
+def RoC(prediction_prob,test_label):
+	'''
+	Takes prediction probabilities and actual ground truths (for spam class)
+	as arg in shape of 1D numpy array with size of num of samples
+	Returns false positive and true positive rate for a set of thresholds
+	'''
+
 	thresholds = np.arange(0,1,0.02)
 	FPR = np.zeros(len(thresholds))
 	TPR = np.zeros(len(thresholds))
 	for (i,th) in enumerate(thresholds):
 		# set threshold on probability along spam column: 0:ham, 1:spam
-		prediction_th = (predoction_prob > th)*1 
+		prediction_th = (prediction_prob > th)*1 
 		conf_th = computeConfMatrix(prediction_th,test_label) 
 		metrics_th = performanceMetrics(conf_th)
 		FPR[i] = metrics_th['FPR_spam']
