@@ -3,22 +3,32 @@
 The repository contains the codes addressing the spam detection over [Enron-Spam](http://www2.isprs.org/commissions/comm3/wg4/2d-sem-label-vaihingen.html) dataset. Enron-Spam dataset includes non-spam (ham) messages from six Enron employess who had large mail boxes, and also it includes spam messages from four differnet sources namely: the SpamAssassin corpus, the Honeypot project, the spam collection of Bruce Guenter, and spam collected by the authors of the [paper](http://www2.aueb.gr/users/ion/docs/ceas2006_paper.pdf).
 
 The codes organized as following : 
--  `main.py` : the main file to read E-mails, apply classification and measure the performance.
--  `EnronDataset.py` contains:
-	- `EnronLoader` class to read and pre-process each E-mail content.
-	- `EnronBatchLoader` class which returns an iterable object to be iterated over during training/testing neural networks.
-
-To classify E-mails to spam and non-spam (ham) classes, first we pre-process the raw E-mails then the cleaned and pre-processed data will be splitted into training, validation and test sets then several machine learning approaches are provided with thier corresponding perfromance on the data.
-
-
-# 1. Pre-processing
+-  The main file `main.py` used to apply classification and measure the performance.
+-  The file `EnronDataset.py` contains:
+	- Class `EnronLoader` to read and pre-process E-mail contents.
+	- Class `EnronBatchLoader` returns an iterable object to be used for mini-batch loading during training/testing neural networks.
+- The file `utilities.py` includes usefull functions for contents analysis and also measuring classification performance.
+- The file `LogisticRegression.py` implement `ClassifierLogisticRegression` class for Logistic Regression Classifier.
+- The file `LSTM.py` implement `ClassifierLSTM` class for Long Short-Term Memory networks.
 
 
-The goal of this project is to detect whether an E-mail is spam or not (ham) solely based on the content and the subject. Therefore, in pre-processing stage we remove all other parts of an email except subject and the body or the content. For reading and preprocessing the raw Enron-spam dataset, ```Class EnronLoader``` is provided as following in ```EnronDataset.py```.
+The methods used for spam classification are : Decision Tree, Multinomial Naive Bayes, K-Nearest Neighbors classifiers (scikit-learn) and also Logistic Regression and LSTM (PyTorch).
+For extracting the features for all classifiers except LSTM, we use bags of words method in which we selected a number of most common words in E-mails (after pre-processing), and for each E-mail in the dataset we count the number of selected words in that E-mail henece our data would be two dimentional array where rows are the samples and columns are the words in the bag.
+However, as we will see in next parts, since LSTM can takes sequence input of different sizes, we use word embedding techniuqe for extracting features for LSTM calssifier.
+
+The classifcation performance is measured using accuracy, precision, recall and f1-score for both spam and ham classes as well as RoC curves for all classifiers.
+
+But, first of all, to classify E-mails to spam and ham classes, first we pre-process the raw E-mails using `EnronLoader` class as following:
+
+
+# Pre-processing
+
+
+The goal of this project is to detect whether an E-mail is spam or not (ham) solely based on the content and the subject. Therefore, in pre-processing stage we remove all other parts of an email except subject and the body or the content. For reading and preprocessing the raw Enron-spam dataset, `Class EnronLoader` is provided as following in `EnronDataset.py`.
 
 
 
-`python
+`
 class EnronLoader(object):
 	def __init__(self,**kwargs):
 		spamDir = kwargs.get('spamDir')
