@@ -12,11 +12,11 @@ class EnronLoader(object):
 		hamDir  = kwargs.get('hamDir')
 		if spamDir == None or hamDir == None:
 			raise NameError("the directory containing ham and spam should be provided")
-		self.spamFiles = self.__filesToBeRead(spamDir)
-		self.hamFiles  = self.__filesToBeRead(hamDir)
+		self.spamFiles = self._filesToBeRead(spamDir)
+		self.hamFiles  = self._filesToBeRead(hamDir)
 
-		self.spamFiles = self.spamFiles[:-1]
-		self.hamFiles = self.hamFiles[:-1]
+		self.spamFiles = self.spamFiles[:1000]
+		self.hamFiles = self.hamFiles[:1000]
 
 		# Punctuation marks to be removed
 		self.punctuation_marks = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\
@@ -35,7 +35,7 @@ class EnronLoader(object):
 		# if the number of words exceeded maxContentLength, trunk the content
 		self.maxContentLength = kwargs.get('maxWords',1000)
 
-	def __filesToBeRead(self,path):
+	def _filesToBeRead(self,path):
 	# function to return list of all files in leaves given a root tree directory
 		fileList = []
 		for root,dirs,files in os.walk(path):
@@ -46,15 +46,15 @@ class EnronLoader(object):
 
 	def readHam(self):
 		print('\n'+'*'*5 + 'reading ham files' + '*'*5)
-		content = self.__preprocess(self.hamFiles)
+		content = self._preprocess(self.hamFiles)
 		return content
 
 	def readSpam(self):
 		print('\n'+'*'*5 + 'reading spam files' + '*'*5)
-		content = self.__preprocess(self.spamFiles)
+		content = self._preprocess(self.spamFiles)
 		return content
 
-	def __preprocess(self,files_list):
+	def _preprocess(self,files_list):
 		content_list=[]
 		numOfFiles = len(files_list)
 		for (num_file,File) in enumerate(files_list):
@@ -146,14 +146,13 @@ class EnronLoader(object):
 			content_list += [content]
 		return content_list
 
-class EnronBatchLoader(object):
+class EnronBatchLoader():
 	def __init__(self, **kwargs):
 		self.batchSize 	= kwargs.get('batchSize')
 		self.data 	= kwargs.get('data')
 		self.label 	= kwargs.get('label')
 		self.seqLengths = kwargs.get('seqLengths')
 		self.LSTM       = kwargs.get('LSTM',False)
-
 		# check the inputs
 		if not isinstance(self.batchSize, int):
 			print(type(self.batchSize))
@@ -162,13 +161,14 @@ class EnronBatchLoader(object):
 			raise TypeError('data should be a tensor')
 		if not isinstance(self.label, type(torch.Tensor())):
 			raise TypeError('label should be a tensor')
+		# if LSTM then we should return sequence length as well
 		if self.LSTM :
 			if not isinstance(self.seqLengths, type(torch.Tensor())):
 				raise TypeError('seqLengths should be a tensor')
 		self.size 	= self.label.size(0)
 		self.shuffle	= kwargs.get('shuffle',False)	
-	def _batchSampler(self):
-		# return a batch indexes using 
+	def _batchSampler_generator(self):
+		# generator used to return a batch indexes using sampler
 		batchIndexes = []
 		for idx in self.sampler_index:
 			batchIndexes.append(idx)
@@ -178,14 +178,17 @@ class EnronBatchLoader(object):
 		if len(batchIndexes) > 0 :
 			yield batchIndexes
 	def __iter__(self):
+		# when start iteration, this method will be called, reset the iterators
+		# if shuffle then return a random permutation, if not just a range for sampler
+		# batch sampler will be intialized with a generator 
 		if self.shuffle:
 			self.sampler_index = iter(np.random.permutation(self.size))
 		else:
 			self.sampler_index = iter(range(self.size))
-		self.__batchSampler = self._batchSampler()
+		self._batchSampler = self._batchSampler_generator()
 		return self
 	def __next__(self):
-		batchInd = next(self.__batchSampler)
+		batchInd = next(self._batchSampler)
 		batch_data = self.data[batchInd]
 		batch_label = self.label[batchInd]
 		if not self.LSTM: 

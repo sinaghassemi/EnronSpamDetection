@@ -6,7 +6,7 @@ from random import shuffle
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.tree import DecisionTreeClassifier
-from functions import * 
+from utilities import * 
 from EnronDataset import EnronLoader,EnronBatchLoader
 from LSTM import ClassifierLSTM
 from LogisticRegression import ClassifierLogisticRegression
@@ -385,7 +385,7 @@ classifier = ClassifierLSTM(batchSize = batchSize,train_data = train_data,val_da
 		train_label = train_label,val_label = val_label,test_label=test_label,\
 		train_lengths = train_lengths, val_lengths = val_lengths, test_lengths = test_lengths,\
 		outputSize = 1, numLayers = 2, hiddenSize = 64, embedSize = 512, vocabSize = vocabSize,\
-		device = 'cuda')
+		device = 'cpu')
 
 best_spamF1Score = 0
 numEpoches_max = 100

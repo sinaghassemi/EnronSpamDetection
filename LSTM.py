@@ -2,7 +2,7 @@ import numpy as np
 import torch.nn as nn
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import torch
-from functions import *
+#from utilities import *
 from math import ceil
 # LSTM
 

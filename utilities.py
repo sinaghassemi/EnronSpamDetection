@@ -1,13 +1,13 @@
-import os 
-import re
+#import os 
+#import re
 import numpy as np
-import nltk
-from nltk.corpus import stopwords
-nltk.download('stopwords')
-from random import shuffle
-import torch.nn as nn
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-import torch
+#import nltk
+#from nltk.corpus import stopwords
+#nltk.download('stopwords')
+#from random import shuffle
+#import torch.nn as nn
+#from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+#import torch
 
 
 def extractVocab(content):
