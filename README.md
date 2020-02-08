@@ -658,7 +658,208 @@ contentList_spam = dataLoader.readSpam()
 contentList_ham = dataLoader.readHam()
 ```
 
-Then we locate where ham and spam files are, and we select the size of our bags of words. The bags of words is used as features for the naive bayes, k-NN, decision tree and logistic regression classifers. EnronLoader class is used to load and pre-process data as it is detaild in [pre-processing section](#-Pre-processing)
+Then we locate where ham and spam files are, and we select the size of our bags of words. The bags of words is used to extract features for the naive bayes, k-NN, decision tree and logistic regression classifers. Next, `EnronLoader` class is used to load and pre-process data as it is detaild in [pre-processing section](#-Pre-processing). It returns two lists of pre-processed contents form spam and ham folders.
+
+
+```python
+##### Concatenating list of contents to a single string for further analysis 
+allContent_spam = " ".join([content for content in contentList_spam])
+allContent_ham  = " ".join([content for content in contentList_ham])
+
+##### Concatenating contents of spam and ham   
+allContent =  allContent_ham + allContent_spam
+contentList = contentList_ham + contentList_spam 
+numOfSamples = len(contentList)
+
+##### Labels : "1" for Spam, and "0" for Ham 
+lableList = [0]*len(contentList_ham) + [1]*len(contentList_spam)
+
+
+##### Shuffling data and labels 
+index_shuffle = list(range(numOfSamples))
+shuffle(index_shuffle)
+contentList_shuffled = []
+lableList_shuffled = []
+
+for i in index_shuffle:
+	contentList_shuffled += [contentList[i]]
+	lableList_shuffled += [lableList[i]]
+
+contentList = contentList_shuffled
+lableList = lableList_shuffled
+```
+
+Then, we concatenate the contents in spam and ham list (`contentList_spam` and `contentList_ham`) to a single string (`allContent_spam` and `allContent_ham`) and also the ham and spam string into a string (`allContent`) for text analysis in the following. Lebel 0 and 1 is chosen for ham and spam classes respectively, then the dataset is shuffled as it is necessary for splitting the dataset.
+
+```python
+##### Extracting vocabulary : 
+##### ExtractVocab() returns a dictionary in which keys are words and values are words count
+vocab_spam = extractVocab(allContent_spam)
+vocab_ham  = extractVocab(allContent_ham)
+vocal_all  = extractVocab(allContent)
+
+numAllWordsInSpam = len(allContent_spam.split())
+numAllWordsInHam = len(allContent_ham.split())
+
+print("number of words in spam:%d and ham:%d" % (numAllWordsInSpam,numAllWordsInHam))
+
+
+##### Sorting words based on their counts
+##### wordCount() return two lists which are words and their count sorted form most common words to least
+wordSorted_spam, wordSortedCounts_spam  = wordCount(vocab_spam)
+wordSorted_ham , wordSortedCounts_ham   = wordCount(vocab_ham)
+wordSorted , wordSortedCounts   = wordCount(vocal_all)
+```
+
+Using `extractVocab` and `wordCount` ,functions which is described in [functions section](#-Functions-for-text-analysis-and-preformance-metrics) ,we extract vocabulary from ham, spam and both classes, then we sort the words based on their occurence counts.
+
+
+```python
+#### Visualization for words in spam and ham E-mails
+wordcloud = WordCloud().generate(allContent_spam)
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.title("words in spam")
+plt.show()
+
+wordcloud = WordCloud().generate(allContent_ham)
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.title("words in ham")
+plt.show()
+
+plt.plot(wordSorted[:100],wordSortedCounts[:100])
+plt.title("100 most common words")
+plt.xticks(rotation='vertical')
+plt.show()
+```
+
+We used word cloud library to generate plots to represent text data in which the size of each word indicates its frequency or importance:
+
+![vai](readMe/wcSpam.png "WordCloud Spam")
+
+![vai](readMe/wcHam.png "WordCloud Ham")
+
+As we can see, the words such as 'Emailaddr' or 'Number' appeared alot in both datasets as we replace every E-mail address and number with these words.
+
+We also plot the words based on their apperance count in the data:
+
+![vai](readMe/wcMostCommon.png "Most Common Words")
+
+
+```python
+##### To get a unique list of words we use sets
+set_hamWords = set(wordSorted_ham)
+set_spamWords = set(wordSorted_spam)
+set_BagOfWords = set(wordSorted[:BoW_size])
+
+##### Words from our vocab that are only in spam E-mails not ham (distinctive words)
+VocabWordsOnlyInSpam = (set_BagOfWords & set_spamWords) - (set_BagOfWords & set_hamWords)
+
+##### Words from our vocab that are only in ham e-mails not spam (distinctive words)
+
+VocabWordsOnlyInHam = (set_BagOfWords & set_hamWords) - (set_BagOfWords & set_spamWords)
+
+print("intersection of bag of words with spam words excluding ham words : %d" % len(VocabWordsOnlyInSpam))
+print("intersection of bag of words with ham words excluding spam words : %d" % len(VocabWordsOnlyInHam))
+print("*"*5 + "words not included in ham files:")
+print((set_BagOfWords & set_spamWords) - (set_BagOfWords & set_hamWords))
+print("*"*5 + "words not included in spam files:")
+print((set_BagOfWords & set_hamWords) - (set_BagOfWords & set_spamWords))
+
+##### Here we print the words in our vocabulary with thier occurrence counts in spam/ham content 
+print("words in bag ")
+for i in range(BoW_size):
+	vocabWord = wordSorted[i]
+	probWordInSpam = vocab_spam.get(vocabWord,0)
+	probWordInHam = vocab_ham.get(vocabWord,0)
+	print("%10s\tSpam : %6d\tHam : %6d" %(vocabWord,probWordInSpam,probWordInHam))
+#################################################################################
+```
+
+Next, we use python sets to see how the words intersect in ham and spam files with the most common words, as we have mentioned, we don't want the words in our bags of words which are only present in one of the classes. This would cause the classifier be overfitted only on Enron datasets. 
+In the end, we print all words we have chosen in the bags of words with their corresponding count in the ham and spam data.
+
+
+
+```python
+########### Preparing the dataset for training the classifiers ##################
+# Here we define the words to be used as features
+# we a number of most common words , it can be thought as bags of words 
+mostCommonWords = wordSorted[:BoW_size]
+
+# Defining a dictionar whose keys are most common words and values are the indexes
+vocab_indexing = {k:v for (v,k) in enumerate(mostCommonWords)} # 
+
+# Tokenization : spliting the content of each file to list of words 
+contentTokenized = []
+for content in contentList:
+	contentTokenized += [content.split()]
+
+# Vectorization : Converting the words to integres using the most common words
+contentVectorized = np.zeros((numOfSamples,BoW_size),dtype=np.int16)
+for (row,content) in enumerate(contentTokenized):
+	for word in content:
+		word_index = vocab_indexing.get(word,0)
+		contentVectorized[row,word_index]+=1	
+#################################################################################
+
+```
+
+Next, we perform tokenization and vectorization for the bags of words approach: first we split the contents into words then the words are assigned an integer index from a python dictionary whose keys are words and values are the indexes.
+
+
+
+```python
+########### Splitting data into train, val, and test set ########################	
+# Defining training (50%) validation (25%) and test set (25%) length
+
+trainLength = int(0.5 * numOfSamples)
+valLength   = int(0.25 * numOfSamples)
+testLength  = numOfSamples - (trainLength + valLength)
+print("total number of samples %d splitted to %d training samples and %d test samples" % (numOfSamples,trainLength,testLength))
+
+train_data   	= contentVectorized[:trainLength]
+train_label  	= lableList  	   [:trainLength]
+val_data  	= contentVectorized[trainLength : trainLength+valLength]
+val_label 	= lableList        [trainLength : trainLength+valLength]
+test_data    	= contentVectorized[trainLength+valLength:]
+test_label   	= lableList        [trainLength+valLength:]
+
+numHam_train 	= train_label.count(0)
+numSpam_train 	= train_label.count(1)
+numHam_val 	= val_label.count(0)
+numSpam_val 	= val_label.count(1)
+numHam_test 	= test_label.count(0)
+numSpam_test 	= test_label.count(1)
+
+
+### Ploting how spam and ham distributed on training / val / test sets
+width = 0.35
+plt.bar(0, numHam_train , width, color='b')
+plt.bar(0, numSpam_train, width,  bottom=numHam_train, color='r')
+
+plt.bar(1, numHam_val , width, color='b',label='Ham')
+plt.bar(1, numSpam_val, width,  bottom=numHam_val, color='r')
+
+plt.bar(2, numHam_test , width, color='b',label='Ham')
+plt.bar(2, numSpam_test, width,  bottom=numHam_test, color='r')
+plt.xticks([0,1,2],['Training','Validation','Test'])
+
+plt.ylabel('Number of E-mails')
+plt.legend(['Ham','Spam'])
+plt.title("Class distribution")
+plt.show()
+#################################################################################
+```
+
+Then, we split the dataset to trianing, validation, and test set using a ratio of 50, 25, and 25 %.
+Next we plot how ham and spam classes are distributed in these datasets.
+
+
+![vai](readMe/ContentLenghts.png "The histogram")
+
+
+
+
 
 
 
