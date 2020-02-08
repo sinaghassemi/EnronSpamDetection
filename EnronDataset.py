@@ -15,8 +15,8 @@ class EnronLoader(object):
 		self.spamFiles = self._filesToBeRead(spamDir)
 		self.hamFiles  = self._filesToBeRead(hamDir)
 
-		self.spamFiles = self.spamFiles[:-1]
-		self.hamFiles = self.hamFiles[:-1]
+		self.spamFiles = self.spamFiles[:1000]
+		self.hamFiles = self.hamFiles[:1000]
 
 		# Punctuation marks to be removed
 		self.punctuation_marks = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\

@@ -5,7 +5,7 @@ import numpy as np
 from random import shuffle
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier,plot_tree
 from utilities import * 
 from EnronDataset import EnronLoader,EnronBatchLoader
 from LSTM import ClassifierLSTM
@@ -133,7 +133,7 @@ for i in range(BoW_size):
 ########### Preparing the dataset for training the classifiers ##################
 
 # Here we define the words to be used as features
-# we a number of most common words , it can be thought as bags of words 
+# we a number of most common words , it can be thought as bag of words 
 mostCommonWords = wordSorted[:BoW_size]
 
 # Defining a dictionar whose keys are most common words and values are the indexes
@@ -176,7 +176,7 @@ numSpam_val 	= val_label.count(1)
 numHam_test 	= test_label.count(0)
 numSpam_test 	= test_label.count(1)
 
-
+'''
 ### Ploting how spam and ham distributed on training / val / test sets
 width = 0.35
 plt.bar(0, numHam_train , width, color='b')
@@ -193,6 +193,7 @@ plt.ylabel('Number of E-mails')
 plt.legend(['Ham','Spam'])
 plt.title("Class distribution")
 plt.show()
+'''
 #################################################################################
 
 ########################################################################
@@ -227,6 +228,15 @@ prediction = classifier.predict(test_data)
 test_conf = computeConfMatrix(prediction,test_label)
 test_metrics = performanceMetrics(test_conf)
 
+
+'''
+#plt.rcParams['figure.dpi'] = 200
+plt.figure()
+plot_tree(classifier.fit(train_data, train_label),max_depth=None, feature_names=mostCommonWords, class_names=['ham','spam'])
+plt.show()
+'''
+
+
 predoction_prob = classifier.predict_proba(test_data)
 FPR_DT ,TPR_DT = ROC(predoction_prob[:,1],test_label) 
 print("----Test set----")
@@ -246,6 +256,7 @@ test_conf = computeConfMatrix(prediction,test_label)
 test_metrics = performanceMetrics(test_conf)
 
 predoction_prob = classifier.predict_proba(test_data)
+
 FPR_KN ,TPR_KN = ROC(predoction_prob[:,1],test_label) 
 
 print("----Test set----")
@@ -311,10 +322,9 @@ print("----------------")
 ########################################################################
 ##########        Long Short Term Memory    ############################
 ########################################################################
-
 print("*** Long Short Term Memory Classifer ***")
 # input data for lstm is extracted using a larger vocabulary which will then be embedded in lower dimentional space
-# as lstm can accept input of different sizes, we will not use bags of words, instead word embedding will be utilized
+# as lstm can accept input of different sizes, we will not use bag of words, instead word embedding will be utilized
 content_lengths = []
 for content in contentList:
 	length = len(content.split())
