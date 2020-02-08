@@ -13,12 +13,11 @@ The codes organized as following :
 
 
 The methods used for spam classification are : Decision Tree, Multinomial Naive Bayes, K-Nearest Neighbors classifiers (scikit-learn) and also Logistic Regression and LSTM (PyTorch).
-For extracting the features for all classifiers except LSTM, we use bags of words method in which we selected a number of most common words in E-mails (after pre-processing), and for each E-mail in the dataset we count the number of selected words in that E-mail henece our data would be two dimentional array where rows are the samples and columns are the words in the bag.
-However, as we will see in next parts, since LSTM can takes sequence input of different sizes, we use word embedding techniuqe for extracting features for LSTM calssifier.
+For extracting the features for all classifiers except LSTM, we use bags of words method in which we selected a number of most common words in E-mails (after pre-processing), and for each E-mail in the dataset we count the number of selected words in that E-mail hence our data would be two dimentional array where the number of rows is the number of samples and the number of columns is the number of select words (words in the bag). However, as we will see in the next parts, since LSTM can takes sequence input of different sizes, we use word embedding techniuqe for extracting features for LSTM calssifier.
 
-The classifcation performance is measured using accuracy, precision, recall and f1-score for both spam and ham classes as well as RoC curves for all classifiers.
+The classifcation performance is measured using accuracy, precision, recall, and f1-score for both spam and ham classes as well as RoC curves for all classifiers.
 
-But, first of all, to classify E-mails to spam and ham classes, first we pre-process the raw E-mails using `EnronLoader` class as following:
+But, first of all, to classify E-mails to spam and ham classes, we pre-process the raw E-mails using `EnronLoader` class as following:
 
 
 # Pre-processing
@@ -28,7 +27,8 @@ The goal of this project is to detect whether an E-mail is spam or not (ham) sol
 
 
 
-`
+`python
+
 class EnronLoader(object):
 	def __init__(self,**kwargs):
 		spamDir = kwargs.get('spamDir')
