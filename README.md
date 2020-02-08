@@ -198,25 +198,200 @@ As can be seen the emials which are truncated at 1000 words are very small porti
 
 
 
+# Data loader for LSTM and logistic regression classifier
+
+`EnronBatchLoader` is a iterator provided in `EnronDataset.py` to iterate over pre-processed Enron dataset to be used while training/testing logistic regression and LSTM networks.
+
+
+
+```python
+class EnronBatchLoader():
+	def __init__(self, **kwargs):
+		self.batchSize 	= kwargs.get('batchSize')
+		self.data 	= kwargs.get('data')
+		self.label 	= kwargs.get('label')
+		self.seqLengths = kwargs.get('seqLengths')
+		self.LSTM       = kwargs.get('LSTM',False)
+		# check the inputs
+		if not isinstance(self.batchSize, int):
+			print(type(self.batchSize))
+			raise TypeError('batch size should be an integer')
+		if not isinstance(self.data, type(torch.Tensor())):
+			raise TypeError('data should be a tensor')
+		if not isinstance(self.label, type(torch.Tensor())):
+			raise TypeError('label should be a tensor')
+		# if LSTM then we should return sequence length as well
+		if self.LSTM :
+			if not isinstance(self.seqLengths, type(torch.Tensor())):
+				raise TypeError('seqLengths should be a tensor')
+		self.size 	= self.label.size(0)
+		self.shuffle	= kwargs.get('shuffle',False)	
+	def _batchSampler_generator(self):
+		# generator used to return a batch indexes using sampler
+		batchIndexes = []
+		for idx in self.sampler_index:
+			batchIndexes.append(idx)
+			if len(batchIndexes) == self.batchSize:
+				yield batchIndexes
+				batchIndexes = []
+		if len(batchIndexes) > 0 :
+			yield batchIndexes
+	def __iter__(self):
+		# when start iteration, this method will be called, reset the iterators
+		# if shuffle then return a random permutation, if not just a range for sampler
+		# batch sampler will be intialized with a generator 
+		if self.shuffle:
+			self.sampler_index = iter(np.random.permutation(self.size))
+		else:
+			self.sampler_index = iter(range(self.size))
+		self._batchSampler = self._batchSampler_generator()
+		return self
+	def __next__(self):
+		batchInd = next(self._batchSampler)
+		batch_data = self.data[batchInd]
+		batch_label = self.label[batchInd]
+		if not self.LSTM: 
+			return batch_data, batch_label
+		else:
+			batch_seqLengths = self.seqLengths[batchInd]
+			batch_seqLengths, sorted_indexes = batch_seqLengths.sort(0, descending=True)
+			batch_data = batch_data[sorted_indexes]
+			batch_label = batch_label[sorted_indexes]
+			return batch_data, batch_label, batch_seqLengths
+	def __len__(self):
+		return self.size
+```
+
+In `EnronBatchLoader`, batch size (integer), data (PyTorch Tensor), and label (PyTorch Tensor) are provided as keyword arguments,
+nevertheless, when used as data loader for LSTM, it also takes sequence length as argument. The data loader in each iteration returns a mini-batch of data and labels (shuffled if shuffled is True) and if LSTM is ture also a batch of sequence length. For LSTM, it is required to sort data in each mini-batch based on sequence length such that the longest sequence should be first. This is necessary as we will see when we trained LSTM for sequences with different lengths.
+
+
+# `utilities.py`
+
+In `utilities.py`, there are some useful functions which will be used in analysing text and also to measure the classification performance.
+
+
+```python
+def extractVocab(content):
+	'''
+	Takes content as arg,
+	Returns vocabulary dictionary
+	where keys are words and values are words count
+	'''
+	dict_vocab = {}
+	content_splitted = content.split(" ")
+	for word in content_splitted:
+		if word in dict_vocab.keys():
+			dict_vocab[word] += 1
+		else:
+			dict_vocab[word] = 1
+	return 	dict_vocab
+
+def wordCount(dict_vocab):
+	'''
+	Takes vocabulary dictionary as arg,
+	Returns two list : 1. words  2. words count
+	which are sorted based on words count
+	'''
+	words_sorted = []
+	counts_sorted = []
+	dict_vocab_counts = list(dict_vocab.values())
+	dict_vocab_words  = list(dict_vocab.keys())
+	sorted_index = sorted(range(len(dict_vocab_counts)),key = lambda x:dict_vocab_counts[x],reverse=True)
+	for i in sorted_index:
+		words_sorted  += [dict_vocab_words[i]]
+		counts_sorted += [dict_vocab_counts[i]]
+	return words_sorted,counts_sorted
+```
+
+`extractVocab` functions takes as argument a string and extract the words and their count of occurence in the string and returns a vocabulary dictionary where keys are words and values are the wrods count. `wordCount` is used to sort the words based on their counts given a vocabulary dictionary, it returns two lists: sorted words, and their count.
+
+
+```python
+def computeConfMatrix(predictions,labels):
+	'''
+	Takes predictions and labels
+	as arg in shape of 1D array with size of num of samples
+	Return Confusion matrix
+	'''
+	confusionMatrix = np.zeros((2,2))
+	for i in range(len(predictions)):
+		predicted = predictions[i]
+		groundtruth = labels[i]
+		confusionMatrix[predicted][groundtruth] += 1
+	return confusionMatrix
+
+def div(a,b):
+	'''
+	To prevent division by zero,
+	Return 0 instead
+	'''
+	if b == 0:
+		return 0
+	else:
+		return a/b
+
+def performanceMetrics(confusionMatrix):
+	'''
+	Takes Confusion Matrix as arg (0: ham , 1:spam),
+	Returns some performance matrix:
+	accuracy, precision, recall, f1-Score, false positive rate, true positive rate
+	and for both spam and ham class
+	'''
+	# For Ham Class
+	TP_ham = confusionMatrix[0][0]
+	TN_ham = confusionMatrix[1][1]
+	FP_ham = confusionMatrix[0][1]
+	FN_ham = confusionMatrix[1][0]
+	acc_ham = div ((TP_ham + TN_ham) ,(TP_ham + TN_ham + FP_ham + FN_ham))
+	precision_ham = div (TP_ham , (TP_ham + FP_ham))
+	recall_ham    = div(TP_ham , (TP_ham + FN_ham))
+	f1Score_ham   = div( 2 * precision_ham * recall_ham , (precision_ham + recall_ham) )
+	FPR_ham =  div(FP_ham , (FP_ham + TN_ham))
+	TPR_ham =  div(TP_ham , (TP_ham + FN_ham))
+	# For Spam Class
+	TP_spam = confusionMatrix[1][1]
+	TN_spam = confusionMatrix[0][0]
+	FP_spam = confusionMatrix[1][0]
+	FN_spam = confusionMatrix[0][1]
+	acc_spam = div((TP_spam + TN_spam) ,(TP_spam + TN_spam + FP_spam + FN_spam))
+	precision_spam = div(TP_spam , (TP_spam + FP_spam))
+	recall_spam    = div(TP_spam , (TP_spam + FN_spam))
+	f1Score_spam   = div(2 * precision_spam * recall_spam , (precision_spam + recall_spam) )
+	FPR_spam =  div(FP_spam , (FP_spam + TN_spam))
+	TPR_spam =  div(TP_spam , (TP_spam + FN_spam))
+	
+	metrics = {'acc_ham':acc_ham  ,'precision_ham':precision_ham,'recall_ham':recall_ham,'f1Score_ham':f1Score_ham,'FPR_ham':FPR_ham,'TPR_ham':TPR_ham,\
+		   'acc_spam':acc_spam,'precision_spam':precision_spam,'recall_spam':recall_spam,'f1Score_spam':f1Score_spam,'FPR_spam':FPR_spam,'TPR_spam':TPR_spam} 
+
+	return metrics
+
+def ROC(predictions_prob,labels):
+	'''
+	Takes prediction probabilities and actual ground truths (for spam class)
+	as arg in shape of 1D numpy array with size of num of samples
+	Returns false positive and true positive rate for a set of thresholds
+	'''
+	thresholds = np.arange(0,1,0.02)
+	FPR = np.zeros(len(thresholds))
+	TPR = np.zeros(len(thresholds))
+	for (i,th) in enumerate(thresholds):
+		# set threshold on probability along spam column: 0:ham, 1:spam
+		predictions_th = (predictions_prob > th)*1 
+		conf_th = computeConfMatrix(predictions_th,labels) 
+		metrics_th = performanceMetrics(conf_th)
+		FPR[i] = metrics_th['FPR_spam']
+		TPR[i] = metrics_th['TPR_spam']
+	return FPR,TPR
+```
+
+`computeConfMatrix` takes as argument predictions and groundtruth labels and it returns confusion matrix in which rows represent predicted class and columns represent the actual class.
+`performanceMetrics` takes as argument the confusion matrix and it computes several metrics for both spam and non-spam classes including: accuracy, precision, recall, f1-score, false positive rate, and true positve rate and it returns the metrics in a python dictionary.
+`ROC` takes as argument predictions probabilties (for spam class) and labels, by setting a threshold (from 0 to 1 by a step of 0.02) it computes the false and true positive rates to be used for ploting ROC curves.
 
 
 
 
-
-# Feature selection
-
-# 3. Methods
-
-
-# 3.1 Naive Bayes Classfier
-
-# 3.2 Logistic Regression
-
-# 3.3 K-nearest neighbor
-
-# 3.4 decision tress
-
-# 3.5 LSTM
 
 
 
