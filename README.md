@@ -3,8 +3,10 @@
 The repository contains the codes addressing the spam detection over [Enron-Spam](http://www2.isprs.org/commissions/comm3/wg4/2d-sem-label-vaihingen.html) dataset. Enron-Spam dataset includes non-spam (ham) messages from six Enron employess who had large mail boxes, and also it includes spam messages from four differnet sources namely: the SpamAssassin corpus, the Honeypot project, the spam collection of Bruce Guenter, and spam collected by the authors of the [paper](http://www2.aueb.gr/users/ion/docs/ceas2006_paper.pdf).
 
 The codes organized as following : 
--  `main.py` is the main file used to pre-process, apply classification and measure the performance.
--  
+-  `main.py` : the main file to read E-mails, apply classification and measure the performance.
+-  `EnronDataset.py` contains:
+	- `EnronLoader` class to read and pre-process each E-mail content.
+	- `EnronBatchLoader` class which returns an iterable object to be iterated over during training/testing neural networks.
 
 To classify E-mails to spam and non-spam (ham) classes, first we pre-process the raw E-mails then the cleaned and pre-processed data will be splitted into training, validation and test sets then several machine learning approaches are provided with thier corresponding perfromance on the data.
 
