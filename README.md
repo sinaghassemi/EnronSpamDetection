@@ -266,7 +266,7 @@ In `EnronBatchLoader`, batch size (integer), data (PyTorch Tensor), and label (P
 nevertheless, when used as data loader for LSTM, it also takes sequence length as argument. The data loader in each iteration returns a mini-batch of data and labels (shuffled if shuffled is True) and if LSTM is ture also a batch of sequence length. For LSTM, it is required to sort data in each mini-batch based on sequence length such that the longest sequence should be first. This is necessary as we will see when we trained LSTM for sequences with different lengths.
 
 
-# `utilities.py`
+# Functions for text analysis and preformance metrics
 
 In `utilities.py`, there are some useful functions which will be used in analysing text and also to measure the classification performance.
 
@@ -389,6 +389,212 @@ def ROC(predictions_prob,labels):
 `performanceMetrics` takes as argument the confusion matrix and it computes several metrics for both spam and non-spam classes including: accuracy, precision, recall, f1-score, false positive rate, and true positve rate and it returns the metrics in a python dictionary.
 `ROC` takes as argument predictions probabilties (for spam class) and labels, by setting a threshold (from 0 to 1 by a step of 0.02) it computes the false and true positive rates to be used for ploting ROC curves.
 
+
+# LSTM Classifier
+
+
+LSTM classifier is written using PyTorch library, in `LSTM.py` first we define the LSTM network structure in `NetworkLSTM` class using `nn.Module` as parent class.
+```python
+
+class NetworkLSTM(nn.Module):
+	def __init__(self, **kwargs):
+		super().__init__()
+		outputSize = kwargs.get('outputSize',1)
+		numLayers = kwargs.get('numLayers',1)
+		self.hiddenSize = kwargs.get('hiddenSize',4)
+		embedSize = kwargs.get('embedSize',4)
+		vocabSize = kwargs.get('vocabSize',1000)
+		dropout = kwargs.get('dropout',0.2)
+		dropoutLSTM = kwargs.get('dropoutLSTM',0.2)
+		self.device = kwargs.get('device','cpu')
+		# embedding layer 
+		self.embedding = nn.Embedding(vocabSize, embedSize)
+		# LSTM Cells
+		self.lstm = nn.LSTM(embedSize, self.hiddenSize, numLayers, dropout = dropoutLSTM, batch_first=True)
+		# last layer fully connected and sigmoid layers
+		self.dropout = nn.Dropout(dropout)
+		self.fc = nn.Linear(self.hiddenSize, outputSize)
+		self.sig = nn.Sigmoid()
+	def forward(self, x, seqLengths):
+		# x is a tensor with size of mini-batch size X max Sequence Lenght (other sequences are padded with zeros)
+		# Ex: x : 32 X 3000 
+		# embedding the input words
+		embeddedOutputs = self.embedding(x)
+		# embeddedOutputs has size of mini-batch size X max Sequence Lenght X embedding dimensions
+		# Ex: embeddedOutputs : 32 X 3000 X 64
+		# pack the input ( removing padding for the sequences with length smaller than max length)
+		packedInput = pack_padded_sequence(embeddedOutputs, seqLengths.cpu().numpy(), batch_first=True)
+		# packedInput includes :
+		# 1. the packed input with size of 
+		# (sum of all sequence lengths in the batch) X (embedding dimensions) , Ex: 50000 x 64
+		# 2. And also it includes the batch size for each time (instance)
+		# inputing the following data class to rnn, the rnn will input batches of different sizes, the sequence with maximum element will be in all batches and sequence with one element will only be in one batche therefore allowing training rnn with sequences of different lengths
+		# Ex:
+		# Hi  	John  	How 	things 	are 	going  
+		# Hello	see	you	soon	-	-
+		# Fine	-	-	-	-	-
+		# [3	2	2	2	1	1]
+		packedOutput, (ht, ct) = self.lstm(packedInput, None)
+		# packedOutput includes data and batch sizes as well, output size is
+		# (sum of all sequence lengths in the batch) X (hidden size)
+		# unpacking the output and recover the paddings
+		output, inputSizes = pad_packed_sequence(packedOutput, batch_first=True)
+		# the output size : batch size X max seq length in the batch X hidden size
+		# inputSizes = the length of samples in the batch
+		# Get the index for last element for each sample in the batch
+		lastWordIndexes = (inputSizes - 1).to(self.device) 
+		lastWordIndexes = lastWordIndexes.view(-1, 1).unsqueeze(2).repeat(1, 1, self.hiddenSize)
+		# for each sample in batch we want the output at the last element
+		output = torch.gather(output, 1, lastWordIndexes).squeeze() # [batch_size, hidden_dim]
+		output = self.dropout(output)
+		output = self.fc(output).squeeze() 
+		output = self.sig(output)
+		return output
+```
+
+The LSTM network include an word embedding layer and lstm cells and fully connected layer. To compute the network output:
+
+
+**First:** The input data is a tensor where the rows are samples in the mini-batch and the columns are the words, as all the E-mails don't have the same number of words,
+We pick the maximum length as the number of columns. Therefore the sequences with words less than maximum length will be padded by zeros.
+
+
+**Second:** The embeding layer will take as input the samples and it outputs the vectors in embedded domain, where each dimension in this domain has a semantic meaning for the classifer,
+For instance, if we want to classify which object can eat, the words 'human' and 'animal' may be projected into the same region in this embedded domain. The embedding layer will outputs a vector for each word.
+
+**Third** We don't want to train LSTM over zeros padded in the samples, `pack_padded_sequence` is used to remove those padded zeros from the samples.
+
+**Forth** At last, We compute the outputs of the LSTM, and we select the last outputs for each sequence to be input to the fully connected layer for classification.
+
+
+`LSTM.py` also includes `ClassifierLSTM` class as following:
+
+```python
+class ClassifierLSTM(object):
+	def __init__(self,**kwargs):
+		self.batchSize 	= kwargs.get('batchSize',256)
+		self.device = kwargs.get('device','cuda')
+		self.model = NetworkLSTM(**kwargs).to(self.device)
+		self.criterion = nn.BCELoss()
+		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
+
+	def saveWeights(self,fileName):
+		torch.save(self.model.state_dict(),fileName)
+
+	def loadWeights(self,fileName):
+		self.model.load_state_dict(torch.load(fileName))
+
+	def train(self,loader):
+		numMiniBatches = ceil(len(loader) / self.batchSize)
+		self.model.train()
+		for mini_batchNum , (minibatch_data,minibatch_label,minibatch_seqLength) in enumerate(loader):
+			minibatch_data = minibatch_data.to(self.device)
+			minibatch_label = minibatch_label.to(self.device)
+			minibatch_seqLength = minibatch_seqLength.to(self.device)
+			# get the output from the model
+			output = self.model(minibatch_data, minibatch_seqLength)
+			# get the loss and backprop
+			loss = self.criterion(output, minibatch_label.float())
+			self.optimizer.zero_grad() 
+			loss.backward()
+			# prevent the exploding gradient
+			clip=5 # gradient clipping
+			nn.utils.clip_grad_norm_(self.model.parameters(), clip)
+			self.optimizer.step()
+			print("Train : MiniBatch[%3d/%3d]   Train loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()),end="\r")
+	def predict(self,loader):
+		numMiniBatches = ceil(len(loader) / self.batchSize)
+		self.model.eval()
+		outputs = []
+		predicted = []
+		labels = []
+		for mini_batchNum , (minibatch_data,minibatch_label,minibatch_seqLength) in enumerate(loader):
+			minibatch_data = minibatch_data.to(self.device)
+			minibatch_label = minibatch_label.to(self.device)
+			minibatch_seqLength = minibatch_seqLength.to(self.device)
+			output = self.model(minibatch_data, minibatch_seqLength)
+			loss = self.criterion(output, minibatch_label.float())
+			print("Val : MiniBatch[%3d/%3d]   Val loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()),end="\r")
+			outputs += output.to('cpu').detach().numpy().squeeze().tolist()
+			predicted += (output.to('cpu')>0.5).numpy().squeeze().tolist()
+			labels += minibatch_label.to('cpu').numpy().astype(np.uint8).squeeze().tolist()
+		return outputs,predicted,labels
+```
+
+
+`ClassifierLSTM` includes methods for training and testing the network as well as methods for saving and loading the networks weights.
+`train` method iterate over our costum data loaders and compute the network outputs and the loss, then it optimizes the network weights based on a criterion (binary cross entropy) and optimization strategy (Adam).
+`predict` method computes the network outputs and spam prediction and returns them. Also, since we have shuffled the inputs and labels during data iteration, we also return labels for computing performance metrics.
+
+
+# Logistic Regression
+
+
+Similar to LSTM, `LogisticRegression.py` includes a class for defining the network using PyTorch library:
+
+```python
+class logisticRegressionNet(nn.Module):
+	def __init__(self, **kwargs):
+		super().__init__()
+		inputSize = kwargs.get('inputSize',32)
+		outputSize = kwargs.get('outputSize',1)
+		self.device = kwargs.get('device','cpu')
+		# Fully connected layer
+		self.fc = nn.Linear(inputSize, outputSize)
+		self.sig = nn.Sigmoid()
+	def forward(self, x):
+		output = self.fc(x).squeeze() 
+		output = self.sig(output)
+		return output
+```
+
+And also it includes `ClassifierLogisticRegression`:
+
+```python
+class ClassifierLogisticRegression(object):
+	def __init__(self,**kwargs):
+		self.batchSize 	= kwargs.get('batchSize',256)
+		self.device = kwargs.get('device','cpu')
+		self.model = logisticRegressionNet(**kwargs).to(self.device)
+		self.criterion = nn.BCELoss()
+		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.005)
+
+	def saveWeights(self,fileName):
+		torch.save(self.model.state_dict(),fileName)
+
+	def loadWeights(self,fileName):
+		self.model.load_state_dict(torch.load(fileName))
+
+	def train(self,loader):
+		numMiniBatches = ceil(len(loader) / self.batchSize)
+		self.model.train()
+		for mini_batchNum , (minibatch_data,minibatch_label) in enumerate(loader):
+			minibatch_data = minibatch_data.to(self.device)
+			minibatch_label = minibatch_label.to(self.device)
+			output = self.model(minibatch_data)
+			loss = self.criterion(output, minibatch_label.float())
+			self.optimizer.zero_grad() 
+			loss.backward()
+			self.optimizer.step()
+			print("Train : MiniBatch[%3d/%3d]   Train loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()),end="\r")
+	def predict(self,loader):
+		numMiniBatches = ceil(len(loader) / self.batchSize)
+		self.model.eval()
+		outputs = []
+		predicted = []
+		for mini_batchNum , (minibatch_data,minibatch_label) in enumerate(loader):
+			minibatch_data = minibatch_data.to(self.device)
+			minibatch_label = minibatch_label.to(self.device)
+			output = self.model(minibatch_data)
+			loss = self.criterion(output, minibatch_label.float())
+			print("Val : MiniBatch[%3d/%3d]   Val loss:%1.5f"  % (mini_batchNum,numMiniBatches,loss.item()),end="\r")
+			outputs += output.to('cpu').detach().numpy().squeeze().tolist()
+			predicted += (output.to('cpu')>0.5).numpy().squeeze().tolist()
+		return outputs,predicted
+
+```
+
+`ClassifierLogisticRegression` includes train, predict, saveWeights, and loadWeight methods to train, test, save and load network weights.
 
 
 
