@@ -86,13 +86,15 @@ We used multinomial naive Bayes classifier where the probability distribution of
 follows the multinomial distribution. Hence, the probability of a feature (in our case, the counts of a word in the bag) given the sample class (e.g. spam) is the number of times that features appeared in the samples of that class divided by the total count of all features for that class.
 
 
-**Decision Tree:** Second classifier is decision tree, in decision tree method, a flow-chart structure (tree) is constructed where each internal node assigned a test/rule on a feature, the two outgoing branches represent the outcome of that test (true or false) and in the end the leaf nodes determine the class of the data. During the training, these rules and their corresponding threshold are learned by a criterion whether by minimizing Gini or entropy according to the representation of the tree.
+**Decision Tree:** Second classifier is decision tree, in decision tree method, a flow-chart structure (tree) is constructed where each internal node assigned a test/rule on a feature, the two outgoing branches represent the outcome of that test (true or false) and in the end the leaf nodes determine the class of the data. During the training, these rules and their corresponding threshold are learned by a criterion whether by minimizing Gini or entropy according to the representation of the tree. The following figure shows an example of the constructed decision tree:
 
 
 ![math](readMe/maths/12.png "")
 
 
-**K-Nearest Neighbors:** The main idea behind the nearest neighbor classifier is to find a number of training samples closest in distance to the test sample point, and predict the label from these training samples usually by measuring standard Euclidean distance. This approach can be regarded as a non-generalizing machine learning method since they simply memorize all of its training data during inference. The label of a sample in the test set is usually defined by the majority vote of its k-nearest training samples label.
+**K-Nearest Neighbors:** The main idea behind the nearest neighbor classifier is to find a number of training samples closest in distance to the test sample point, and predict the label from these training samples usually by measuring standard Euclidean distance. This approach can be regarded as a non-generalizing machine learning method since they simply memorize all of its training data during inference. The label of a sample in the test set is usually defined by the majority vote of its k-nearest training samples label. In the following, the result of the k-nearest neighbor classifier with `k=15` is depicted where it subdivides the feature space into three classes:
+
+![math](readMe/maths/13.png "")
 
 
 **Logistic Regression:** Logistic regression is a linear classification model in which the probabilities are predicted using a logistic function such as sigmoid. 
