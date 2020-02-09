@@ -54,11 +54,11 @@ Nevertheless, as before, tokenization is performed to split E-mail contents into
 ![math](readMe/maths/11.png "")
 
 
-Here, `L` is the length of the largest sample (longest E-mail) and `W_ij` is the word index using the vocabulary in the j-th position in the sequence and in the i-th sample (E-mail). In contrast to bag of words, the number of words is not counted. However, to provide a 2-dimensional array we pad the sequence with length than `L` with zeros.
+Here, `L` is the length of the largest sample (longest E-mail) and `W_ij` is the word index in  the i-th sample (E-mail) and at j-th position in the sequence. In contrast to bag of words, the number of words is not counted. However, to provide a 2-dimensional array we pad the sequence with length than `L` with zeros.
 
 # 1.4 Classification
 
-In this project to perform classification different machine learning methods are applied: Multinomial Naive Bayes, K-Nearest Neighbor, Decision Tree, Logistic Regression and LSTM classifiers as detailed in the following:
+In this project to perform classification, different machine learning methods are applied: Multinomial Naive Bayes, K-Nearest Neighbor, Decision Tree, Logistic Regression and LSTM classifiers as detailed in the following:
 
 **Multinomial Naive Bayes:** The first classification approach is naive Bayes classifier, as its name implies it uses Bayes' theorem and with the assumption that the features (in our case, selected words counts) are independent. Therefore, the probability that a sample belongs to a class `y` given its feature vectors `x_1 ... x_n` can be estimated using Bayes' theorem:
 
@@ -87,6 +87,9 @@ follows the multinomial distribution. Hence, the probability of a feature (in ou
 
 
 **Decision Tree:** Second classifier is decision tree, in decision tree method, a flow-chart structure (tree) is constructed where each internal node assigned a test/rule on a feature, the two outgoing branches represent the outcome of that test (true or false) and in the end the leaf nodes determine the class of the data. During the training, these rules and their corresponding threshold are learned by a criterion whether by minimizing Gini or entropy according to the representation of the tree.
+
+
+![math](readMe/maths/12.png "")
 
 
 **K-Nearest Neighbors:** The main idea behind the nearest neighbor classifier is to find a number of training samples closest in distance to the test sample point, and predict the label from these training samples usually by measuring standard Euclidean distance. This approach can be regarded as a non-generalizing machine learning method since they simply memorize all of its training data during inference. The label of a sample in the test set is usually defined by the majority vote of its k-nearest training samples label.
