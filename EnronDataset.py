@@ -40,7 +40,7 @@ class EnronLoader(object):
 			if len(dirs) == 0: 	# leaves : containing the files
 				for f in files:
 					self.filesList += [os.path.join(root,f)]
-		self.filesList 	= self.filesList[:1000]
+		self.filesList 	= self.filesList[:-1]
 	def removeDuplicates(self,contentList):
 		similarity_contents={} # keys: tuple of content number in list,values : fraction of identitcal lines
 		num_contentsToBeRemoved = set([])
