@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch
 from math import ceil
 
+
 class ClassifierLogisticRegression(object):
 	def __init__(self,**kwargs):
 		self.batchSize 	= kwargs.get('batchSize',256)
