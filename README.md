@@ -97,8 +97,7 @@ follows the multinomial distribution. Hence, the probability of a feature (in ou
 ![math](readMe/maths/13.png "")
 
 
-**Logistic Regression:** Logistic regression is a linear classification model in which the probabilities are predicted using a logistic function such as sigmoid. 
-Therefore, first, a linear model applied over the input vector:
+**Logistic Regression:** Logistic regression is classification model in which the probabilities are predicted using a logistic function such as sigmoid. First, a linear model applied over the input vector`x_0 ... x_n`:
 
 
 ![math](readMe/maths/6.png "")
@@ -115,29 +114,63 @@ Therefore:
 
 
 
-During training, weghit wectors `w_0 ... w_p` are optimized by minimizing cross entrop loss between the output `y` and the groundtruth `p` (`p` is zero or one):
+During training, weight vectors `w_0 ... w_n` are optimized by minimizing cross entropy loss between the output `y` and the groundtruth `p` :
 
 
 ![math](readMe/maths/9.png "")
 
-The loss can be back-propagated to the model weigths, where an optimization strategy is used to optimized weights based on loss gradient w.r.t weights.
+where `p` is either zero or one (ham or spam). the loss is then back-propagated to the model weights, where an optimization strategy is used to optimized weights based on loss gradient w.r.t weights.
 
-- **LSTM:** Long Short Term Memory (LSTM) network is a special type of recurrent neural networks which can learn long-term dependencies in the input data. LSTM networks have been used in many applications regarding time series and sequence data and are able to learn and remeber information for long periods of time. They achieve this by using a set of gates such as input and forget gates. These gates use a non-linear function such as sigmoid to choose whether remember a part of the information or suppress it. Moreover, recurrent cells hidden and cell state which is fed into the next timestamps further improves the LSTM networks performance:
+**LSTM:** Long Short Term Memory (LSTM) network is a special type of recurrent neural network that can learn long-term dependencies in the input data. LSTM networks have been used in many applications in the field of time series and sequence data. These networks are able to learn and remember information for long periods of time. They achieve this by using a set of gates such as input and forget gates. These gates use a non-linear function such as sigmoid to choose whether to remember a part of the information or suppress it conditioned on input data itself. Moreover, LSTM has hidden and cell states which are fed into the next timestamps further improving the LSTM networks performance:
 
 
 ![math](readMe/maths/10.png "")
 
 
-Where `h_t` and `c_t` used as input for the next timestamp and in the case of stacked LSTM, one cell outputs are used as input to the next layer LSTM cell. LSTMs networks such as common neural networks are trained by minimizing a loss function and using an optimization strategy. 
-
+Where `x_t` in input vector, `f_t` is forget gate vector, `i_t` is input gate vector, `o_t` output gate vector and `h_t` and `c_t` are hidden and cell state vectors. In the case of stacked LSTM, one cell outputs are used as input to the next layer LSTM cell which helps to learn more sophisticated patterns in the input sequence. LSTMs networks such as common neural networks are trained by minimizing a loss function and using an optimization strategy. 
 
 # 3. Results
 
-Results are given in the terms of accuracy, presicion, recall, F1-score and also ROC curves for all classifiers.
-It should be noted that all these classification methods can further be improved by doing a grid search over their hyper parameters. For instance, in case of K-NN, it is expected to obtain different results by chosing different values for `n`, or in the case of decision tree classifier, the results would vary by chosing different criterion such as entropy to measure the quality of split at internal nodes. Also the size of vocabulary (number of words in the bag) plays an important role in the performance. However, the purpose here is to provide a simple comparison between these different classifiers.
+Results are given in the terms of accuracy, precision, recall, F1-score and also ROC curves for all classifiers.
+
+Let `tp` be true positive, `fp` false positive, `tn` true negative and `fn` false negative, then accuracy will be computed as follows:
 
 
-In the following table the performance metric are given over the test set for the spam class:
+![math](readMe/maths/14.png "")
+
+
+Precision:
+
+![math](readMe/maths/15.png "")
+
+
+Recall:
+
+![math](readMe/maths/16.png "")
+
+
+F1-Score:
+
+![math](readMe/maths/17.png "")
+
+
+
+ROC curves are computed using false and true positive rates by applying different thresholds on the class probability, false positive rate (FPR):
+
+
+![math](readMe/maths/18.png "")
+
+True positive rate:
+
+![math](readMe/maths/19.png "")
+
+
+
+
+It should be noted that all these classification methods can further be improved by performing a grid search over their hyperparameters. For instance, in the case of K-NN, it is expected to obtain different results by choosing different values for `n`, or in the case of decision tree classifier, the results would vary by choosing different criterion such as entropy to measure the quality of split at internal nodes. Also, the size of vocabulary (number of words in the bag) plays an important role in the performance. However, the purpose here is to provide a simple comparison between these different classifiers.
+
+
+In the following table the performance metric is given over the test set for the spam class:
 
 
 | Method        	| Accuracy [%]  | Precision [%] | Recall  [%] 	| F1-Score  [%] |
@@ -148,18 +181,14 @@ In the following table the performance metric are given over the test set for th
 | Logistic Regression 	|   97.34    	|  95.90   	|  98.91	|  97.38	|
 | LSTM 			|   98.16    	|  98.18   	|  98.15	|  98.17	|
 
-As can be seen from the results, the LSTM performs the best. It can be expected, since the bag of words is used for other methods, it discards the words order in the contents. However LSTM can extract the dependencies between the words as the sequences are provided in a ordered manner using word embedding.Next, ROC curves for different classifiers are shown in the following plot, note that for better illustration, the plot show top right corner of the curves:
+As can be seen from the results, the LSTM performs the best. It can be expected since the bag of words that are used for other methods discards the order of the words in the contents. However, LSTM can extract the dependencies between the words as the sequences are provided in an ordered manner using word embedding. Next, ROC curves for different classifiers are shown in the following plot, note that for better illustration, the plot shows the top right corner of the curves:
 
 
 
 ![math](readMe/RoC.png)
 
 
-The decision tree and K-nearest neighbors classifier are not probabilistics methods meaning that the outcome of these classifiers are the labels not probability. However, in the decision tree the probability can be provided as the fration of samples in the leaf to all the samples of the same class. For the K-nearest neighbor, the probability can be computed measuring by the fraction of the nearest neighbor with the same class to all n-nearest neighbor. Hence, for decision tree and K-nearest neighbor, ROC curves are not present in all the ranges. Here, again LSTM provide better performance as for lower false positive rates it has higher true positive rate.
-
-
-
-
+The decision tree and K-nearest neighbors classifier are not probabilistic methods meaning that the outcome of these classifiers is the labels, not a probability. However, in the decision tree, the probability can be provided as the fraction of samples in the leaf to all the samples of the same class. For the K-nearest neighbor, the probability can be computed measuring by the fraction of the nearest neighbor with the same class to all n-nearest neighbors. Hence, for decision tree and K-nearest neighbor, ROC curves are not present in all the ranges. Here, again LSTM provides better performance as for lower false-positive rates it has a higher true positive rate.
 
 
 
