@@ -809,15 +809,66 @@ ham_dataPath = 'data/ham/'
 spam_dataPath = 'data/spam/'
 BoW_size =  512 	# the number of words used in bag of words which is used as features for : naive bayes, k-nn, decision tree and logistic regresion classifiers
 
-dataLoader = EnronLoader(hamDir=ham_dataPath,spamDir=spam_dataPath)
-print("number of spam files: %d" % len(dataLoader.spamFiles))
-print("number of ham files: %d" % len(dataLoader.hamFiles))
+hamPreprocessed = 'data/hamPreprocessed' 
+spamPreprocessed = 'data/spamPreprocessed'
+alreadyPreprocessed = True
 
-contentList_spam = dataLoader.readSpam()
-contentList_ham = dataLoader.readHam()
+if alreadyPreprocessed:
+	print("Already Pre-processed, loading files")
+	with open(spamPreprocessed, 'rb') as f:
+		contentList_spam = pickle.load(f)
+
+	with open(hamPreprocessed, 'rb') as f:
+		contentList_ham = pickle.load(f)
+else:
+	dataLoader_spam = EnronLoader(filesDir=spam_dataPath)
+	print("number of spam files: %d" % len(dataLoader_spam.filesList))
+	contentList_spam = dataLoader_spam.readFiles()
+	print("*"*5 + 'removing duplicates file'+"*"*5)
+	print("number of spam E-mails before removing duplicates:%d" % len(contentList_spam))
+	contentList_spam = dataLoader_spam.removeDuplicates(contentList_spam)
+	print("number of spam E-mails after removing duplicates:%d" % len(contentList_spam))
+	with open(spamPreprocessed, 'wb') as f:
+		pickle.dump(contentList_spam, f)
+	print("*"*15)
+
+	dataLoader_ham = EnronLoader(filesDir=ham_dataPath)
+	print("number of ham files: %d" % len(dataLoader_ham.filesList))
+	contentList_ham = dataLoader_ham.readFiles()
+	print("*"*5 + 'removing duplicates file'+"*"*5)
+	print("number of ham E-mails before removing duplicates:%d" % len(contentList_ham))
+	contentList_ham = dataLoader_ham.removeDuplicates(contentList_ham)
+	print("number of ham E-mails after removing duplicates:%d" % len(contentList_ham))
+	with open(hamPreprocessed, 'wb') as f:
+		pickle.dump(contentList_ham, f)
+	print("*"*15)
 ```
 
-Then we locate where ham and spam files are, and we select the size of our bag of words. The bag of words is used to extract features for the naive bayes, k-NN, decision tree and logistic regression classifers. Next, `EnronLoader` class is used to load and pre-process data as it is detaild in [pre-processing section](#-Pre-processing). It returns two lists of pre-processed contents form spam and ham folders.
+Then we locate where ham and spam files are, then we select the size of our bag of words. The bag of words is used to extract features for the naive bayes, k-NN, decision tree and logistic regression classifers. Next, `EnronLoader` class is used to load and pre-process data as it is detaild in [pre-processing section](#-Pre-processing). It returns two lists of pre-processed contents form spam and ham folders and the duplicates are also removed for the contents. If we have already pre-processed the data then we just load the pickle files and if not, in the end we save the lists into two pickle files. 
+
+```python
+##### Under sampling to prevent unbalanced dataset 
+len_spam = len(contentList_spam)
+len_ham = len(contentList_ham)
+
+if len_spam <= len_ham:
+	index_shuffle = list(range(len_ham))
+	shuffle(index_shuffle)
+	content_shuffled = []
+	for i in index_shuffle:
+		content_shuffled += [contentList_ham[i]]
+	contentList_ham = content_shuffled[:len_spam]
+else:
+	index_shuffle = list(range(len_spam))
+	shuffle(index_shuffle)
+	content_shuffled = []
+	for i in index_shuffle:
+		content_shuffled += [contentList_spam[i]]
+	contentList_spam = content_shuffled[:len_ham]
+print("number of ham E-mails %d , spam E-mails %d" % (len(contentList_ham),len(contentList_spam)))
+```
+
+To balance the classes in the dataset, we use undersampling for the classes with more samples, of course after shuffling the samples. 
 
 
 ```python
