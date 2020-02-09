@@ -30,11 +30,12 @@ The preprocessing can be summarized in the following list:
 
 After reading and pre-processing the E-mails contents in both spam and ham classes, tokenization is performed. Tokenization is the process of splitting the text to small parts called tokens. Here, tokens are words hence tokenization is the process of splitting the E-mail content into words.
 
-Then, for all the classifiers except LSTM, I extract features using bag of words. Therefore, first a vocabulary is constructed using contents in both ham and spam classes. Then, a number of most common words is selected as the words in the bag. For each E-mail in the dataset, the occurence of the words in the bag are counted in that E-mail.
+Then, for all the classifiers except LSTM, I extract features using bag of words. Therefore, first, a vocabulary is constructed using contents in both ham and spam classes. Then, a number of most common words is selected as the words in the bag. For each E-mail in the dataset, the occurence of each word in the bag is counted for that E-mail. As a result, the data would be a two dimensional array as following:
 
 
 
-$$x_{1,2} = {-b\pm\sqrt{b^2 - 4ac} \over 2a}.$$
+![math](readMe/maths/1.png "")
+
 
 
 
