@@ -1,6 +1,30 @@
-# EnronSpamDetection
+# Spam Detection over Enron-Spam dataset
 
-The repository contains the codes addressing the spam detection over [Enron-Spam](http://www2.isprs.org/commissions/comm3/wg4/2d-sem-label-vaihingen.html) dataset. Enron-Spam dataset includes non-spam (ham) messages from six Enron employess who had large mail boxes, and also it includes spam messages from four differnet sources namely: the SpamAssassin corpus, the Honeypot project, the spam collection of Bruce Guenter, and spam collected by the authors of the [paper](http://www2.aueb.gr/users/ion/docs/ceas2006_paper.pdf).
+The repository contains the codes addressing the spam detection over [Enron-Spam](http://www2.isprs.org/commissions/comm3/wg4/2d-sem-label-vaihingen.html) dataset. In the first section, I briefly describe the dataset, pre-processing, classfication methods used, and the obtained results, in the second section, more details about implementation and the provided codes are given. 
+
+# 1. Dataset, classifiacation methods, and results
+
+## 1.1 Dataset
+
+Enron-Spam dataset includes non-spam (ham) messages from six Enron employess who had large mail boxes, and also it includes spam messages from four differnet sources namely: the SpamAssassin corpus, the Honeypot project, the spam collection of Bruce Guenter, and spam collected by the authors of the [paper](http://www2.aueb.gr/users/ion/docs/ceas2006_paper.pdf).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 The codes organized as following : 
 -  The main file `main.py` used to apply classification and measure the performance.
