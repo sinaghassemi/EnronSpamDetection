@@ -2,7 +2,7 @@
 
 The repository contains the codes addressing the spam detection over [Enron-Spam](http://www2.isprs.org/commissions/comm3/wg4/2d-sem-label-vaihingen.html) dataset. In the first section, I briefly describe the dataset, pre-processing, classfication methods used, and the obtained results, in the second section, more details about implementation and the provided codes are given. 
 
-# 1. Dataset, classifiacation methods, and results
+# 1. Dataset, classifiacation methods
 
 ## 1.1 Dataset
 
@@ -105,12 +105,18 @@ During training, weghit wectors `w_0 ... w_p` are optimized by minimizing cross 
 The loss can be back-propagated to the model weigths, where an optimization strategy is used to optimized weights based on loss gradient w.r.t weights.
 
 
+- **LSTM:** Long Short Term Memory (LSTM) network is a special type of recurrent neural networks which can learn long-term dependencies in the input data. LSTM networks have been used in many applications regarding time series and sequence data and are able to learn and remeber information for long periods of time. They achieve this by using a set of gates such as input and forget gates. These gates use a non-linear function such as sigmoid to choose whether remember a part of the information or suppress it. Moreover, recurrent cells hidden and cell state which is fed into the next time steps further improves the LSTM networks performance:
+
+
+![math](readMe/maths/10.png "")
+
+
+LSTMs networks such as most common neural networks are trained by minimizing a loss function and using an optimization strategy.
 
 
 
 
-
-
+# 2.Implementation
 
 The codes organized as following : 
 -  The main file `main.py` used to apply classification and measure the performance.
@@ -130,7 +136,7 @@ The classifcation performance is measured using accuracy, precision, recall, and
 But, first of all, to classify E-mails to spam and ham classes, we pre-process the raw E-mails using `EnronLoader` class as following:
 
 
-# Pre-processing
+# 2.1 Pre-processing
 
 
 The goal of this project is to detect whether an E-mail is spam or not (ham) solely based on the content and the subject. Therefore, in pre-processing stage we remove all other parts of an email except subject and the body or the content. For reading and preprocessing the raw Enron-spam dataset, `Class EnronLoader` is provided in `EnronDataset.py`.
@@ -308,7 +314,7 @@ As can be seen the emials which are truncated at 1000 words are very small porti
 
 
 
-# Data loader for LSTM and logistic regression classifier
+# 2.2 Data loader for LSTM and logistic regression classifier
 
 `EnronBatchLoader` is a iterator provided in `EnronDataset.py` to iterate over pre-processed Enron dataset to be used while training/testing logistic regression and LSTM networks.
 
@@ -376,7 +382,7 @@ In `EnronBatchLoader`, batch size (integer), data (PyTorch Tensor), and label (P
 nevertheless, when used as data loader for LSTM, it also takes sequence length as argument. The data loader in each iteration returns a mini-batch of data and labels (shuffled if shuffled is True) and if LSTM is ture also a batch of sequence length. For LSTM, it is required to sort data in each mini-batch based on sequence length such that the longest sequence should be first. This is necessary as we will see when we trained LSTM for sequences with different lengths.
 
 
-# Functions for text analysis and preformance metrics
+# 2.3 Functions for text analysis and preformance metrics
 
 In `utilities.py`, there are some useful functions which will be used in analysing text and also to measure the classification performance.
 
@@ -500,7 +506,7 @@ def ROC(predictions_prob,labels):
 `ROC` takes as argument predictions probabilties (for spam class) and labels, by setting a threshold (from 0 to 1 by a step of 0.02) it computes the false and true positive rates to be used for ploting ROC curves.
 
 
-# LSTM Classifier
+# 2.4 LSTM Classifier
 
 
 LSTM classifier is written using PyTorch library, in `LSTM.py` first we define the LSTM network structure in `NetworkLSTM` class using `nn.Module` as parent class.
@@ -637,7 +643,7 @@ class ClassifierLSTM(object):
 `predict` method computes the network outputs and spam prediction and returns them. Also, since we have shuffled the inputs and labels during data iteration, we also return labels for computing performance metrics.
 
 
-# Logistic Regression
+# 2.5 Logistic Regression
 
 
 Similar to LSTM, `LogisticRegression.py` includes a class for defining the network using PyTorch library:
@@ -708,7 +714,7 @@ class ClassifierLogisticRegression(object):
 
 
 
-# Main File
+# 2.6 Main File
 
 
 ```python
@@ -1246,7 +1252,7 @@ plt.show()
 At the end, we compare the resuts of different methods over the ROC curves.
 
 
-
+# 3. Results
 
 
 
