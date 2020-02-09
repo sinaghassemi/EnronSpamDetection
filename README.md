@@ -104,16 +104,16 @@ During training, weghit wectors `w_0 ... w_p` are optimized by minimizing cross 
 
 The loss can be back-propagated to the model weigths, where an optimization strategy is used to optimized weights based on loss gradient w.r.t weights.
 
-- **LSTM:** Long Short Term Memory (LSTM) network is a special type of recurrent neural networks which can learn long-term dependencies in the input data. LSTM networks have been used in many applications regarding time series and sequence data and are able to learn and remeber information for long periods of time. They achieve this by using a set of gates such as input and forget gates. These gates use a non-linear function such as sigmoid to choose whether remember a part of the information or suppress it. Moreover, recurrent cells hidden and cell state which is fed into the next time steps further improves the LSTM networks performance:
+- **LSTM:** Long Short Term Memory (LSTM) network is a special type of recurrent neural networks which can learn long-term dependencies in the input data. LSTM networks have been used in many applications regarding time series and sequence data and are able to learn and remeber information for long periods of time. They achieve this by using a set of gates such as input and forget gates. These gates use a non-linear function such as sigmoid to choose whether remember a part of the information or suppress it. Moreover, recurrent cells hidden and cell state which is fed into the next timestamps further improves the LSTM networks performance:
 
 
 ![math](readMe/maths/10.png "")
 
 
-LSTMs networks such as most common neural networks are trained by minimizing a loss function and using an optimization strategy.
+Where `h_t` and `c_t` used as input for the next timestamp and in the case of stacked LSTM, one cell outputs are used as input to the next layer LSTM cell. LSTMs networks such as common neural networks are trained by minimizing a loss function and using an optimization strategy. 
 
 
-# 2.Implementation
+# 2. Implementation
 
 The codes organized as following : 
 -  The main file `main.py` used to apply classification and measure the performance.
@@ -1250,6 +1250,26 @@ At the end, we compare the resuts of different methods over the ROC curves.
 
 
 # 3. Results
+
+Results are given in the terms of accuracy, presicion, recall, F1-score and also ROC curves for all classifiers.
+It should be noted that all these classification methods can further be improved by doing a grid search over their hyper parameters. For instance, in case of K-NN, it is expected to obtain different results by chosing different values for `n`, or in the case of decision tree classifier, the results would vary by chosing different criterion such as entropy to measure the quality of split at internal nodes. Also the size of vocabulary (number of words in the bag) plays an important role in the performance. However, the purpose here is to provide a simple comparison between these different classifiers.
+
+
+In the following table the performance metric are given over the test set for both ham and spam classes:
+
+
+| Method        	| Accuracy [%]  | Precision  	| Recall 	| F1-Score 	|
+|-----------------------|:-------------:|:-------------:|:-------------:|--------------:|
+| Naive Bayes   	|  |  	|		|		|
+| Decision Tree 	|      |    	|		|		|
+| K-Nearest Neighbors 	|       |     	|		|		|
+| Logistic Regression 	|       |     	|		|		|
+| LSTM 			|       |     	|		|		|
+
+
+
+
+
 
 
 
