@@ -43,17 +43,22 @@ class EnronLoader(object):
 		self.filesList 	= self.filesList[:1000]
 	def removeDuplicates(self,contentList):
 		similarity_contents={} # keys: tuple of content number in list,values : fraction of identitcal lines
+		num_contentsToBeRemoved = set([])
 		for num_1 in range(len(contentList)):
 			for num_2 in range(num_1+1,len(contentList)):
-				print("measuring similarity [%d, %d]"%(num_1,num_2),end='\r')
-				content_1 = contentList[num_1]
-				content_2 = contentList[num_2]
-				num_identicalLines = 0
-				for line_1 in content_1.split('\n'):
-					for line_2 in content_2.split('\n'):
-						if line_1 == line_2:
-							num_identicalLines += 1
-				similarity_ratio = num_identicalLines/len(content_1.split('\n'))
+				if num_2 not in num_contentsToBeRemoved:
+					print("measuring similarity [%d, %d]"%(num_1,num_2),end='\r')
+					content_1 = contentList[num_1]
+					content_2 = contentList[num_2]
+					num_identicalLines = 0
+					for line_1 in content_1.split('\n'):
+						for line_2 in content_2.split('\n'):
+							if line_1 == line_2:
+								num_identicalLines += 1
+					similarity_ratio = num_identicalLines/len(content_1.split('\n'))
+					if similarity_ratio > 0.9:
+						num_contentsToBeRemoved.add(num_2)
+		'''
 				similarity_contents[(num_1,num_2)] = similarity_ratio
 		print('')
 		similar_contents =  {} # keys : first content, valuse: list of similar contents
@@ -68,11 +73,10 @@ class EnronLoader(object):
 		for contentNum,contentNumList in similar_contents.items():
 			for num in contentNumList:
 				set_contentsToRemove.add(num)
-
-		#print("%d E-mails out of %d is removed"%(len(set_contentsToRemove),len(contentList)))
+		'''
 		new_contentList=[]
 		for i in range(len(contentList)):
-			if i not in set_contentsToRemove:
+			if i not in num_contentsToBeRemoved:
 				new_contentList+=[contentList[i]]
 		return new_contentList
 
