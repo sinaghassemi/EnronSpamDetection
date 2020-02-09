@@ -34,7 +34,7 @@ Then, for all the classifiers except LSTM, I extract features using bag of words
 
 
 
-\begin{bmatrix}a & b \\c & d \end{bmatrix} 
+$$x_{1,2} = {-b\pm\sqrt{b^2 - 4ac} \over 2a}.$$
 
 
 
