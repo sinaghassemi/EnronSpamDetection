@@ -1,53 +1,66 @@
 # Spam Detection over Enron-Spam dataset
 
-The repository contains the codes addressing the spam detection over [Enron-Spam](http://www2.isprs.org/commissions/comm3/wg4/2d-sem-label-vaihingen.html) dataset. In the first section, I briefly describe the dataset, pre-processing, classfication methods used, and the obtained results, in the second section, more details about implementation and the provided codes are given. 
+The repository contains the codes addressing spam detection over [Enron-Spam](http://www2.isprs.org/commissions/comm3/wg4/2d-sem-label-vaihingen.html) dataset. First, dataset, pre-processing, methodology, and results are described, then, more details about implementation and the provided codes are given. 
 
-# 1. Dataset, classifiacation methods
+# 1. Dataset,pre-processing classifiacation methods
 
 ## 1.1 Dataset
 
-Enron-Spam dataset includes non-spam (ham) messages from six Enron employess who had large mail boxes, and also it includes spam messages from four differnet sources namely: the SpamAssassin corpus, the Honeypot project, the spam collection of Bruce Guenter, and spam collected by the authors of the [paper](http://www2.aueb.gr/users/ion/docs/ceas2006_paper.pdf).
+Enron-Spam dataset includes non-spam (ham) messages from six Enron employees who had large mailboxes, and also it includes spam messages from four different sources namely: the SpamAssassin corpus, the Honeypot project, the spam collection of Bruce Guenter, and spam collected by the authors of the [paper](http://www2.aueb.gr/users/ion/docs/ceas2006_paper.pdf).
 
 
 
 # 1.2 Pre-processing
 
-In this project, I use spam and ham E-mails in thier raw format thus it is required to apply several pre-processing methods over the raw data to prepare it for feature extraction to obtain the features which will be used as input to the classifier.
+In this project, I use spam and ham E-mails in their raw format thus it is required to apply several pre-processing methods over the raw data to prepare it for feature extraction to obtain the features which will be used as input to the classifier. Here, the main goal is to remove the redundant data that may increase our vocabulary size and also prepare a reliable dataset for measuring classifier performance and generalization.
 
 The preprocessing can be summarized in the following list:
-- All letters are converted to lower case.
-- Only the body and the subject of the E-mail is preserved and used for classification, therefore lines which contain header information such as message-id, date,mime-version, etc are removed for the E-mail contents.
-- HTML/JAVA inline commands and syntax are also removed from the contents as they are not useful for the spam detection.
-- Any date, time, number, E-mail or website address are replaced with the word 'date', 'time', 'number', 'emailaddrs' or 'webaddrs'. The logic behind this pre-processing is that the actual E-mail or website address or a number or a date will not provide information for detecting spam E-mails, and if it does, it will be limited to this dataset and will not contribute to the genralization of classifier. For instance, if in this dataset spam contents are coming from a certain number of companies, then the classifier will be trained to detect spam based on the web address of these comapanies, however in real world application it might not include all types of spam. In addition, using generelized term such as 'emailaddrs' for all E-mail addresses will prevent the unnecessary increase of the vocabulary size.
-- The punctuation marks are removed from the contents. 
-- Stop words such as: whom, this, that, ... which can not provide useful information are also removed in pre-processing.
-- To challenge the classification methods and their generalization capability, I also remove the most common words which are only present in one of the catagories (ham or spam), some of these words which are only present in ham E-mails are the name of Enron employees which the ham files are originated from,  or the words that are only seen in spam files are the name of the companies which have sent spam E-mails. Therefore, I decided to exclude these words to further challenge the classifiers and prevent overfitting on dataset.
 
-- After applying these pre-processing, since there are multiple E-mails in both spam and ham classes, I removed the deuplicates by measuring the similarity of E-mails in each class, this similarity is measured by the fraction of identical lines to all the E-mail lines, I remove those duplicates with more than 90 % similarity. Removing duplicates is essential, since their presence increase the possibility that a duplicated sample falls into both training and test set which makes the classifier be prone to overfitting.
+- All letters are converted to lower case.
+
+- Only the body and the subject of the E-mail are preserved and used for classification, therefore lines that contain header information such as message-id, date, mime-version, etc are removed from the E-mail contents. 
+
+- HTML/JAVA inline commands and syntax are also removed from the contents as they are not useful for spam detection.
+
+- Any date, time, number, E-mail or website address are replaced with the word 'date', 'time', 'number', 'emailaddrs' or 'webaddrs'. The logic behind this pre-processing is that the actual E-mail or website address or a number or date will not provide information for detecting spam E-mails, and even if it does, it will be limited to this dataset and will not contribute to the generalization of the classifier. For instance, if in this dataset spam contents are coming from a certain number of companies, then the classifier will be trained to detect spam based on the web address of these companies, however, in real-world applications, it might not include all types of spam. Also, using a generalized term such as 'emailaddrs' for all E-mail addresses will prevent the unnecessary increase of the vocabulary size.
+
+- The punctuation marks are removed from the contents.
+ 
+- Stop words such as whom, this, that, ... which can not provide useful information are also removed in pre-processing.
+
+- To challenge the classification methods and their generalization capability, I also remove the most common words which are only present in one of the categories (ham or spam), some of these words which are only present in ham E-mails are the name of Enron employees which the ham files are originated from,  or the words that are only seen in spam files are the name of the companies which have sent spam E-mails. Therefore, I decided to exclude these words to further challenge the classifiers and prevent overfitting on the dataset.
+
+- After applying these pre-processing, since there are multiple E-mails in both spam and ham classes, I removed the duplicates by measuring the similarity of E-mails in each class, this similarity is measured by the fraction of identical lines to all the E-mail lines, I remove those duplicates with more than 90 % similarity. Removing duplicates is essential since their presence increases the possibility that a duplicated sample falls into both training and test set which makes the classifier prone to overfitting.
 
 
 # 1.3 Feature extraction
 
-After reading and pre-processing the E-mails contents in both spam and ham classes, tokenization is performed. Tokenization is the process of splitting the text to small parts called tokens. Here, tokens are words hence tokenization is the process of splitting the E-mail content into words.
+After reading and pre-processing the E-mails contents in both spam and ham classes, tokenization is performed. Tokenization is the process of splitting the text into small parts called tokens. Here, tokens are words hence tokenization is the process of splitting the E-mail content into words.
 
-Then, for all the classifiers except LSTM, I extract features using bag of words. Therefore, first, a vocabulary is constructed using contents in both ham and spam classes. Then, a number of most common words (512 words in our experiment) is selected as the words in the bag. For each E-mail in the dataset, the occurence of each word in the bag is counted for that E-mail. As a result, the data would be a two dimensional array as following:
+Then, for all the classifiers except LSTM, I extract features using "bag of words" method. Therefore, first, a vocabulary is constructed using contents in both ham and spam classes. Then, a number of most common words (512 words in our experiment) is selected as the words in the bag. For each E-mail in the dataset, the occurrence of each word in the bag is counted for that E-mail. As a result, the data would be a two-dimensional array as following:
 
 
 
 ![math](readMe/maths/1.png "")
 
-where `n` is the number of samples (E-mails) and `m` is the number of words in the bag, and `c_ij` is the number of j-th word in i-th sample.
+where `n` is the number of samples (E-mails) and `m` is the number of words in the bag, and `c_ij` indicates the number which j-th word appeared in i-th sample.
 
 
-However, in the case of LSTM, the features are extracted using another approach. Since LSTM can take as input, sequences of different lengths, our input dimension can vary over different samples.
-Nevertheless, as before, tokenization is perform to split E-mail contents into words. Then, each word is indexed using a vocabulary, however this time I select much larger vocabulary (8000 words) as the words will mapped into a lower 512-dimensional embedding space. This embedding is also learned during the LSTM training such that the words which have similar semantic characteristics will be mapped into similar region in embedding space. Noentheless, these semantic characteristics will be defined by classifier during back-propagation. We will see the implementation details in the next parts.
+However, in the case of LSTM, the features are extracted using a different approach. Since LSTM can take as input, sequences of different lengths, our input dimension can vary over different samples. Therefore, bag of words is not necessarily required, and LSTM can take as input sequences of words in the E-mail contents leading to better performance by capturing the pattern in words appearance in ham and spam classes. 
+
+Nevertheless, as before, tokenization is performed to split E-mail contents into words. Then, each word is indexed using a vocabulary, however this time I select much larger vocabulary (8000 words) as the words will be mapped into a lower 512-dimensional embedding space. This embedding is also learned during the LSTM training such that the words which have similar semantic characteristics will be mapped into a similar region in embedding space. Nonetheless, these semantic characteristics will be defined by classifier during back-propagation. The embedding function and LSTM are trained end-to-end, and the input data would be as following:
 
 
-# 1.4 Classifiacation
+![math](readMe/maths/11.png "")
 
-To perform classification, Multinomial Naive Bayes, K-Nearest Neighbor, Decision Tree, Logistic Regresion and LSTM classifers are used:
 
-- **Multinomial Naive Bayes:** First classifaction approach is naive Bayes classifier, as its name implies it uses Bayes' theorem and with the assumption that the features (in our case selected words counts) are independent. Therefore, the probability that a sample belongs to a class `y` given its feature vectors `x_1 ... x_n` can be estimated usign Bayes' theorem:
+Here, `L` is the length of the largest sample (longest E-mail) and `W_ij` is the word index using the vocabulary in the j-th position in the sequence and in the i-th sample (E-mail). In contrast to bag of words, the number of words is not counted. However, to provide a 2-dimensional array we pad the sequence with length than `L` with zeros.
+
+# 1.4 Classification
+
+In this project to perform classification different machine learning methods are applied: Multinomial Naive Bayes, K-Nearest Neighbor, Decision Tree, Logistic Regression and LSTM classifiers as detailed in the following:
+
+**Multinomial Naive Bayes:** The first classification approach is naive Bayes classifier, as its name implies it uses Bayes' theorem and with the assumption that the features (in our case, selected words counts) are independent. Therefore, the probability that a sample belongs to a class `y` given its feature vectors `x_1 ... x_n` can be estimated using Bayes' theorem:
 
 
 ![math](readMe/maths/2.png "")
@@ -59,28 +72,28 @@ By the assumption, the features are independent, hence:
 ![math](readMe/maths/3.png "")
 
 
-The class of a sample can be estimated as following:
+The class of a sample can be estimated as follows:
 
 ![math](readMe/maths/4.png "")
 
 
 
-We used multinomial naive Bayes classifer where the probability distrution of each feature given the class:
+We used multinomial naive Bayes classifier where the probability distribution of each feature given the class:
 
 ![math](readMe/maths/5.png "")
 
 
-follows the multinomial distribution. Hence, the probability of a feature (in our case the coutn of a word in the bag) given the sample class (e.g. spam) is the number of times that features appeared in the samples of that class divided by total count of all features for that class.
+follows the multinomial distribution. Hence, the probability of a feature (in our case, the counts of a word in the bag) given the sample class (e.g. spam) is the number of times that features appeared in the samples of that class divided by the total count of all features for that class.
 
 
-- **Decision Tree:** Second classifer is decision tree, in decision tree method, a flow-chart structure (tree) is constructed where each internal node assigned a test/rule on a feature, the two outgoing branches represnt the outcome of that test (true or flase) and in the end the leaf nodes determine the class of the data. During the trainig, these rules and their corresponding threshold are learned by a criterion whether by minimizing gini or entropy according to the representation of the tree.
+**Decision Tree:** Second classifier is decision tree, in decision tree method, a flow-chart structure (tree) is constructed where each internal node assigned a test/rule on a feature, the two outgoing branches represent the outcome of that test (true or false) and in the end the leaf nodes determine the class of the data. During the training, these rules and their corresponding threshold are learned by a criterion whether by minimizing Gini or entropy according to the representation of the tree.
 
 
-- **K-Nearest Neighbors:** The main idea behind nearest neighbor classifer is to find a number of training samples closest in distance to the test sample point, and predict the label from these training samples usually by measuring standard Euclidean distance. This approach can be regarded as non-generalizing machine learning method, since they simply memorize all of its training data during inference. The label of a sample in test set is usually defined by the majority vote of its k-nearest training samples label.
+**K-Nearest Neighbors:** The main idea behind the nearest neighbor classifier is to find a number of training samples closest in distance to the test sample point, and predict the label from these training samples usually by measuring standard Euclidean distance. This approach can be regarded as a non-generalizing machine learning method since they simply memorize all of its training data during inference. The label of a sample in the test set is usually defined by the majority vote of its k-nearest training samples label.
 
 
-- **Logistic Regression:** Logistic regression is a linear classification model in which the probabilities are predicted using logistic function such as sigmoid. 
-Therefore, first a linear model in applied over the input vector:
+**Logistic Regression:** Logistic regression is a linear classification model in which the probabilities are predicted using a logistic function such as sigmoid. 
+Therefore, first, a linear model applied over the input vector:
 
 
 ![math](readMe/maths/6.png "")
