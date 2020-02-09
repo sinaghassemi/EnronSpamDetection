@@ -10,11 +10,49 @@ Enron-Spam dataset includes non-spam (ham) messages from six Enron employess who
 
 
 
+# 1.2 Pre-processing
+
+In this project, I use spam and ham E-mails in thier raw format henece it is required to apply several pre-processing methods over the raw data to prepare it for feature extraction to obtain the features which will be used as input to the classifier.
+
+The preprocessing can be summarized in the following list:
+- All letters are converted to lower case.
+- Only the body and the subject of the E-mail is preserved and used for classification, therefore lines which contain header information such as message-id, date,mime-version, etc are removed for the E-mail contents.
+- HTML/JAVA inline commands and syntax are also removed from the contents as they are not useful for the spam detection.
+- Any date, time, number, E-mail or website address are replaced with the word 'date', 'time', 'number', 'emailaddrs' or 'webaddrs'. The logic behind this pre-processing is that the actual E-mail or website address or a number or a date will not provide information for detecting spam E-mails, and if it does, it will be limited to this dataset and will not contribute to the genralization of classifier. For instance, if in this dataset spam filters are coming from a certain number of companies, then the classifier will be trained to detect spam based on the web address of these comapanies which in real application it might not include all types of spam. In addition, using generelized term such as 'emailaddrs' for all E-mail addresses will prevent the unnecessary increase of the vocabulary size.
+- The punctuation marks are removed from the contents. 
+- Stop words such as: whom, this, that, ... which can not provide useful information are also removed in pre-processing.
+- To challenge the classification methods and their generalization capability, I also remove the most common words which are only present in one of the catagories (ham or spam), some of these words which are only present in ham E-mails are the name of Enron employees which the ham files are originated from,  or the words that are only seen in spam files are the name of the companies which have sent spam E-mails. Therefore, I decided to exclude these words to further challenge the classifiers and prevent overfitting on dataset.
+
+- After applying these pre-processing, since there are multiple E-mails in both spam and ham classes, I removed the deuplicates by measuring the similarity of E-mails in each class, this similarity is measured by the fraction of identical lines to all the E-mail lines, I remove those duplicates with more than 90 % similarity. Removing duplicates is essential, since their presence increase the possibility that a duplicated sample falls into both training and test set which makes the classifier be prone to overfitting.
+
+
+# 1.3 Feature extraction
+
+After reading and pre-processing the E-mails contents in both spam and ham classes, tokenization is performed. Tokenization is the process of splitting the text to small parts called tokens. Here, tokens are words hence tokenization is the process of splitting the E-mail content into words.
+
+Then, for all the classifiers except LSTM, I extract features using bag of words. Therefore, first a vocabulary is constructed using contents in both ham and spam classes. Then, a number of most common words is selected as the words in the bag. For each E-mail in the dataset, the occurence of the words in the bag are counted in that E-mail.
+
+
+
+$$
+\begin{array}{cc} 
+0.8944272 & 0.4472136\\
+-0.4472136 & -0.8944272
+\end{array}
+$$ 
 
 
 
 
 
+ In the bag of words approach, first I defined the words in the bag as to be the most common words in our vocabulary 
+
+
+
+- Tokenization.
+- Vectorization : assgining each word an integer index.
+
+The ve can be seen 
 
 
 
