@@ -113,6 +113,38 @@ The loss can be back-propagated to the model weigths, where an optimization stra
 Where `h_t` and `c_t` used as input for the next timestamp and in the case of stacked LSTM, one cell outputs are used as input to the next layer LSTM cell. LSTMs networks such as common neural networks are trained by minimizing a loss function and using an optimization strategy. 
 
 
+# 3. Results
+
+Results are given in the terms of accuracy, presicion, recall, F1-score and also ROC curves for all classifiers.
+It should be noted that all these classification methods can further be improved by doing a grid search over their hyper parameters. For instance, in case of K-NN, it is expected to obtain different results by chosing different values for `n`, or in the case of decision tree classifier, the results would vary by chosing different criterion such as entropy to measure the quality of split at internal nodes. Also the size of vocabulary (number of words in the bag) plays an important role in the performance. However, the purpose here is to provide a simple comparison between these different classifiers.
+
+
+In the following table the performance metric are given over the test set for the spam class:
+
+
+| Method        	| Accuracy [%]  | Precision [%] | Recall  [%] 	| F1-Score  [%] |
+|-----------------------|:-------------:|:-------------:|:-------------:|--------------:|
+| Naive Bayes   	|   93.18	|  95.99	|  90.14	|  92.97	|
+| Decision Tree 	|   95.16    	|  94.58  	|  95.82	|  95.20	|
+| K-Nearest Neighbors 	|   73.21    	|  65.18   	|  99.71	|  78.83	|
+| Logistic Regression 	|   97.34    	|  95.90   	|  98.91	|  97.38	|
+| LSTM 			|   98.16    	|  98.18   	|  98.15	|  98.17	|
+
+As can be seen from the results, the LSTM performs the best. It can be expected, since the bag of words is used for other methods, it discards the words order in the contents. However LSTM can extract the dependencies between the words as the sequences are provided in a ordered manner using word embedding.Next, ROC curves for different classifiers are shown in the following plot, note that for better illustration, the plot show top right corner of the curves:
+
+
+
+![math](readMe/ROC.png "")
+
+
+The decision tree and K-nearest neighbors classifier are not probabilistics methods meaning that the outcome of these classifiers are the labels not probability. However, in the decision tree the probability can be provided as the fration of samples in the leaf to all the samples of the same class. For the K-nearest neighbor, the probability can be computed measuring by the fraction of the nearest neighbor with the same class to all n-nearest neighbor. Hence, for decision tree and K-nearest neighbor, ROC curves are not present in all the ranges. Here, again LSTM provide better performance as for lower false positive rates it has higher true positive rate.
+
+
+
+
+
+
+
 # 2. Implementation
 
 The codes organized as following : 
@@ -1247,24 +1279,6 @@ plt.show()
 
 
 At the end, we compare the resuts of different methods over the ROC curves.
-
-
-# 3. Results
-
-Results are given in the terms of accuracy, presicion, recall, F1-score and also ROC curves for all classifiers.
-It should be noted that all these classification methods can further be improved by doing a grid search over their hyper parameters. For instance, in case of K-NN, it is expected to obtain different results by chosing different values for `n`, or in the case of decision tree classifier, the results would vary by chosing different criterion such as entropy to measure the quality of split at internal nodes. Also the size of vocabulary (number of words in the bag) plays an important role in the performance. However, the purpose here is to provide a simple comparison between these different classifiers.
-
-
-In the following table the performance metric are given over the test set for both ham and spam classes:
-
-
-| Method        	| Accuracy [%]  | Precision  	| Recall 	| F1-Score 	|
-|-----------------------|:-------------:|:-------------:|:-------------:|--------------:|
-| Naive Bayes   	|  |  	|		|		|
-| Decision Tree 	|      |    	|		|		|
-| K-Nearest Neighbors 	|       |     	|		|		|
-| Logistic Regression 	|       |     	|		|		|
-| LSTM 			|       |     	|		|		|
 
 
 
