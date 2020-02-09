@@ -30,25 +30,54 @@ The preprocessing can be summarized in the following list:
 
 After reading and pre-processing the E-mails contents in both spam and ham classes, tokenization is performed. Tokenization is the process of splitting the text to small parts called tokens. Here, tokens are words hence tokenization is the process of splitting the E-mail content into words.
 
-Then, for all the classifiers except LSTM, I extract features using bag of words. Therefore, first, a vocabulary is constructed using contents in both ham and spam classes. Then, a number of most common words is selected as the words in the bag. For each E-mail in the dataset, the occurence of each word in the bag is counted for that E-mail. As a result, the data would be a two dimensional array as following:
+Then, for all the classifiers except LSTM, I extract features using bag of words. Therefore, first, a vocabulary is constructed using contents in both ham and spam classes. Then, a number of most common words (512 words in our experiment) is selected as the words in the bag. For each E-mail in the dataset, the occurence of each word in the bag is counted for that E-mail. As a result, the data would be a two dimensional array as following:
 
 
 
 ![math](readMe/maths/1.png "")
 
+where `n` is the number of samples (E-mails) and `m` is the number of words in the bag, and `c_ij` is the number of j-th word in i-th sample.
+
+
+However, in the case of LSTM, the features are extracted using another approach. Since LSTM can take as input, sequences of different lengths, our input dimension can vary over different samples.
+Nevertheless, as before, tokenization is perform to split E-mail contents into words. Then, each word is indexed using a vocabulary, however this time I select much larger vocabulary (8000 words) as the words will mapped into a lower 512-dimensional embedding space. This embedding is also learned during the LSTM training such that the words which have similar semantic characteristics will be mapped into similar region in embedding space. Noentheless, these semantic characteristics will be defined by classifier during back-propagation. We will see the implementation details in the next parts.
+
+
+# 1.4 Classifiacation
+
+To perform classification, Multinomial Naive Bayes, K-Nearest Neighbor, Decision Tree, Logistic Regresion and LSTM classifers are used:
+
+- **Multinomial Naive Bayes:** First classifaction approach is naive Bayes classifier, as its name implies it uses Bayes' theorem and with the assumption that the features (in our case selected words counts) are independent. Probability of a sample belongs to class `y` given its feature vectors `x_1 ... x_n` can be computed usign Bayes' theorem:
+
+
+![math](readMe/maths/2.png "")
+
+
+By the assumption, the features are independent, hence:
+
+
+![math](readMe/maths/3.png "")
+
+
+The class of a sample can be estimated as following:
+
+![math](readMe/maths/4.png "")
+
+
+
+We used multinomial naive Bayes classifer where the probability distrution of each feature given the class:
+
+![math](readMe/maths/5.png "")
+
+
+follows the multinomial distribution. Hence, the probability of a feature (in our case the coutn of a word in the bag) given the sample class (e.g. spam) is the number of times that features appeared in the samples of that class divided by total count of all features for that class.
 
 
 
 
 
- In the bag of words approach, first I defined the words in the bag as to be the most common words in our vocabulary 
 
 
-
-- Tokenization.
-- Vectorization : assgining each word an integer index.
-
-The ve can be seen 
 
 
 
