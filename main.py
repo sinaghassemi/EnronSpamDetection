@@ -35,7 +35,7 @@ BoW_size =  512 	# the number of words used in bag of words which is used as fea
 
 hamPreprocessed = 'data/hamPreprocessed' 
 spamPreprocessed = 'data/spamPreprocessed'
-alreadyPreprocessed = False
+alreadyPreprocessed = True
 
 if alreadyPreprocessed:
 	print("Already Pre-processed, loading files")
@@ -68,6 +68,28 @@ else:
 	with open(hamPreprocessed, 'wb') as f:
 		pickle.dump(contentList_ham, f)
 	print("*"*15)
+
+
+##### Under sampling to prevent unbalanced dataset 
+len_spam = len(contentList_spam)
+len_ham = len(contentList_ham)
+
+if len_spam <= len_ham:
+	index_shuffle = list(range(len_ham))
+	shuffle(index_shuffle)
+	content_shuffled = []
+	for i in index_shuffle:
+		content_shuffled += [contentList_ham[i]]
+	contentList_ham = content_shuffled[:len_spam]
+else:
+	index_shuffle = list(range(len_spam))
+	shuffle(index_shuffle)
+	content_shuffled = []
+	for i in index_shuffle:
+		content_shuffled += [contentList_spam[i]]
+	contentList_spam = content_shuffled[:len_ham]
+
+print("number of ham E-mails %d , spam E-mails %d" % (len(contentList_ham),len(contentList_spam)))	
 
 ##### Concatenating list of contents to a single string for further analysis 
 allContent_spam = " ".join([content for content in contentList_spam])
