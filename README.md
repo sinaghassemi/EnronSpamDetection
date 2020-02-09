@@ -47,7 +47,7 @@ Nevertheless, as before, tokenization is perform to split E-mail contents into w
 
 To perform classification, Multinomial Naive Bayes, K-Nearest Neighbor, Decision Tree, Logistic Regresion and LSTM classifers are used:
 
-- **Multinomial Naive Bayes:** First classifaction approach is naive Bayes classifier, as its name implies it uses Bayes' theorem and with the assumption that the features (in our case selected words counts) are independent. Probability of a sample belongs to class `y` given its feature vectors `x_1 ... x_n` can be computed usign Bayes' theorem:
+- **Multinomial Naive Bayes:** First classifaction approach is naive Bayes classifier, as its name implies it uses Bayes' theorem and with the assumption that the features (in our case selected words counts) are independent. Therefore, the probability that a sample belongs to a class `y` given its feature vectors `x_1 ... x_n` can be estimated usign Bayes' theorem:
 
 
 ![math](readMe/maths/2.png "")
@@ -73,13 +73,36 @@ We used multinomial naive Bayes classifer where the probability distrution of ea
 follows the multinomial distribution. Hence, the probability of a feature (in our case the coutn of a word in the bag) given the sample class (e.g. spam) is the number of times that features appeared in the samples of that class divided by total count of all features for that class.
 
 
+- **Decision Tree:** Second classifer is decision tree, in decision tree method, a flow-chart structure (tree) is constructed where each internal node assigned a test/rule on a feature, the two outgoing branches represnt the outcome of that test (true or flase) and in the end the leaf nodes determine the class of the data. During the trainig, these rules and their corresponding threshold are learned by a criterion whether by minimizing gini or entropy according to the representation of the tree.
+
+
+- **K-Nearest Neighbors:** The main idea behind nearest neighbor classifer is to find a number of training samples closest in distance to the test sample point, and predict the label from these training samples usually by measuring standard Euclidean distance. This approach can be regarded as non-generalizing machine learning method, since they simply memorize all of its training data during inference. The label of a sample in test set is usually defined by the majority vote of its k-nearest training samples label.
+
+
+- **Logistic Regression:** Logistic regression is a linear classification model in which the probabilities are predicted using logistic function such as sigmoid. 
+Therefore, first a linear model in applied over the input vector:
+
+
+![math](readMe/maths/6.png "")
+
+
+Then, the sigmoid functions will be used on the output:
+
+![math](readMe/maths/7.png "")
+
+
+Therefore:
+
+![math](readMe/maths/8.png "")
 
 
 
+During training, weghit wectors `w_0 ... w_p` are optimized by minimizing cross entrop loss between the output `y` and the groundtruth `p` (`p` is zero or one):
 
 
+![math](readMe/maths/9.png "")
 
-
+The loss can be back-propagated to the model weigths, where an optimization strategy is used to optimized weights based on loss gradient w.r.t weights.
 
 
 
