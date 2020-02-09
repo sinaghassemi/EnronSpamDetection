@@ -104,7 +104,6 @@ During training, weghit wectors `w_0 ... w_p` are optimized by minimizing cross 
 
 The loss can be back-propagated to the model weigths, where an optimization strategy is used to optimized weights based on loss gradient w.r.t weights.
 
-
 - **LSTM:** Long Short Term Memory (LSTM) network is a special type of recurrent neural networks which can learn long-term dependencies in the input data. LSTM networks have been used in many applications regarding time series and sequence data and are able to learn and remeber information for long periods of time. They achieve this by using a set of gates such as input and forget gates. These gates use a non-linear function such as sigmoid to choose whether remember a part of the information or suppress it. Moreover, recurrent cells hidden and cell state which is fed into the next time steps further improves the LSTM networks performance:
 
 
@@ -112,8 +111,6 @@ The loss can be back-propagated to the model weigths, where an optimization stra
 
 
 LSTMs networks such as most common neural networks are trained by minimizing a loss function and using an optimization strategy.
-
-
 
 
 # 2.Implementation
