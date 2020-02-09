@@ -123,7 +123,7 @@ In the following table the performance metric are given over the test set for th
 
 
 | Method        	| Accuracy [%]  | Precision [%] | Recall  [%] 	| F1-Score  [%] |
-|-----------------------|:-------------:|:-------------:|:-------------:|--------------:|
+|-----------------------|:-------------:|:-------------:|:-------------:|:-------------:|
 | Naive Bayes   	|   93.18	|  95.99	|  90.14	|  92.97	|
 | Decision Tree 	|   95.16    	|  94.58  	|  95.82	|  95.20	|
 | K-Nearest Neighbors 	|   73.21    	|  65.18   	|  99.71	|  78.83	|
@@ -134,7 +134,7 @@ As can be seen from the results, the LSTM performs the best. It can be expected,
 
 
 
-![math](readMe/ROC.png "")
+![math](readMe/RoC.png)
 
 
 The decision tree and K-nearest neighbors classifier are not probabilistics methods meaning that the outcome of these classifiers are the labels not probability. However, in the decision tree the probability can be provided as the fration of samples in the leaf to all the samples of the same class. For the K-nearest neighbor, the probability can be computed measuring by the fraction of the nearest neighbor with the same class to all n-nearest neighbor. Hence, for decision tree and K-nearest neighbor, ROC curves are not present in all the ranges. Here, again LSTM provide better performance as for lower false positive rates it has higher true positive rate.
