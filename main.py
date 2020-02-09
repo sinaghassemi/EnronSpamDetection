@@ -33,8 +33,8 @@ ham_dataPath = 'data/ham/'
 spam_dataPath = 'data/spam/'
 BoW_size =  512 	# the number of words used in bag of words which is used as features for : naive bayes, k-nn, decision tree and logistic regresion classifiers
 
-hamPreprocessed = 'hamPreprocessed' 
-spamPreprocessed = 'spamPreprocessed'
+hamPreprocessed = 'data/hamPreprocessed' 
+spamPreprocessed = 'data/spamPreprocessed'
 alreadyPreprocessed = True
 
 if alreadyPreprocessed:
