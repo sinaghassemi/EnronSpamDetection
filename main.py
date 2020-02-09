@@ -35,7 +35,7 @@ BoW_size =  512 	# the number of words used in bag of words which is used as fea
 
 hamPreprocessed = 'data/hamPreprocessed' 
 spamPreprocessed = 'data/spamPreprocessed'
-alreadyPreprocessed = True
+alreadyPreprocessed = False
 
 if alreadyPreprocessed:
 	print("Already Pre-processed, loading files")
@@ -45,27 +45,29 @@ if alreadyPreprocessed:
 	with open(hamPreprocessed, 'rb') as f:
 		contentList_ham = pickle.load(f)
 else:
-	dataLoader = EnronLoader(hamDir=ham_dataPath,spamDir=spam_dataPath)
-	print("number of spam files: %d" % len(dataLoader.spamFiles))
-	print("number of ham files: %d" % len(dataLoader.hamFiles))
-
-	contentList_spam = dataLoader.readSpam()
-	contentList_ham = dataLoader.readHam()
-
+	dataLoader_spam = EnronLoader(filesDir=spam_dataPath)
+	print("number of spam files: %d" % len(dataLoader_spam.filesList))
+	contentList_spam = dataLoader_spam.readFiles()
 	print("*"*5 + 'removing duplicates file'+"*"*5)
 	print("number of spam E-mails before removing duplicates:%d" % len(contentList_spam))
-	contentList_spam = dataLoader.removeDuplicates(contentList_spam)
+	contentList_spam = dataLoader_spam.removeDuplicates(contentList_spam)
 	print("number of spam E-mails after removing duplicates:%d" % len(contentList_spam))
-
-	print("*"*5 + 'removing duplicates file'+"*"*5)
-	print("number of ham E-mails before removing duplicates:%d" % len(contentList_ham))
-	contentList_ham = dataLoader.removeDuplicates(contentList_ham)
-	print("number of ham E-mails after removing duplicates:%d" % len(contentList_ham))
-
-	with open(hamPreprocessed, 'wb') as f:
-		pickle.dump(contentList_ham, f)
 	with open(spamPreprocessed, 'wb') as f:
 		pickle.dump(contentList_spam, f)
+	print("*"*15)
+
+
+
+	dataLoader_ham = EnronLoader(filesDir=ham_dataPath)
+	print("number of ham files: %d" % len(dataLoader_ham.filesList))
+	contentList_ham = dataLoader_ham.readFiles()
+	print("*"*5 + 'removing duplicates file'+"*"*5)
+	print("number of ham E-mails before removing duplicates:%d" % len(contentList_ham))
+	contentList_ham = dataLoader_ham.removeDuplicates(contentList_ham)
+	print("number of ham E-mails after removing duplicates:%d" % len(contentList_ham))
+	with open(hamPreprocessed, 'wb') as f:
+		pickle.dump(contentList_ham, f)
+	print("*"*15)
 
 ##### Concatenating list of contents to a single string for further analysis 
 allContent_spam = " ".join([content for content in contentList_spam])
@@ -113,7 +115,7 @@ wordSorted_ham , wordSortedCounts_ham   = wordCount(vocab_ham)
 wordSorted , wordSortedCounts   = wordCount(vocal_all)
 
 #### Visualization for words in spam and ham E-mails
-'''
+#'''
 wordcloud = WordCloud().generate(allContent_spam)
 plt.imshow(wordcloud, interpolation='bilinear')
 plt.title("words in spam")
@@ -128,7 +130,7 @@ plt.plot(wordSorted[:100],wordSortedCounts[:100])
 plt.title("100 most common words")
 plt.xticks(rotation='vertical')
 plt.show()
-'''
+#'''
 ##### To get a unique list of words we use sets
 set_hamWords = set(wordSorted_ham)
 set_spamWords = set(wordSorted_spam)
@@ -203,7 +205,7 @@ numSpam_val 	= val_label.count(1)
 numHam_test 	= test_label.count(0)
 numSpam_test 	= test_label.count(1)
 
-'''
+#'''
 ### Ploting how spam and ham distributed on training / val / test sets
 width = 0.35
 plt.bar(0, numHam_train , width, color='b')
@@ -220,7 +222,7 @@ plt.ylabel('Number of E-mails')
 plt.legend(['Ham','Spam'])
 plt.title("Class distribution")
 plt.show()
-'''
+#'''
 #################################################################################
 
 ########################################################################
@@ -298,16 +300,16 @@ print("----------------")
 print("*** Logistic Regression Classifer ***")
 
 # Data Loaders
-batchSize = 32
+batchSize = 256
 train_loader = EnronBatchLoader(data = torch.Tensor(train_data)	,label = torch.Tensor(train_label)	,batchSize=batchSize	,shuffle=True)
 val_loader   = EnronBatchLoader(data = torch.Tensor(val_data)	,label = torch.Tensor(val_label)	,batchSize=batchSize	,shuffle=False)
 test_loader  = EnronBatchLoader(data = torch.Tensor(test_data)	,label = torch.Tensor(test_label)	,batchSize=batchSize	,shuffle=False)	
 
 # Classifier
 
-classifier = ClassifierLogisticRegression(batchSize = 32,outputSize = 1,   inputSize = BoW_size, device = 'cpu')
+classifier = ClassifierLogisticRegression(batchSize = 256,outputSize = 1,   inputSize = BoW_size, device = 'cuda')
 best_spamF1Score = 0
-numEpoches_max = 100
+numEpoches_max = 1000
 epoch = 0
 # if perfromance dose not imporve for certain number of consecutive epoches stop the training
 numEoches_stopCriteria = 10 
@@ -365,7 +367,7 @@ for content in contentList:
 	contentTokenized += [content.split()]	
 
 
-vocabSize = 4000
+vocabSize = 8000
 mostCommonWords = wordSorted[:vocabSize-2]
 vocab_indexing = {k:v+2 for (v,k) in enumerate(mostCommonWords)} # 0 : pad, 1: unknown(not in vocab)
 
@@ -424,10 +426,10 @@ classifier = ClassifierLSTM(batchSize = batchSize,train_data = train_data,val_da
 		train_label = train_label,val_label = val_label,test_label=test_label,\
 		train_lengths = train_lengths, val_lengths = val_lengths, test_lengths = test_lengths,\
 		outputSize = 1, numLayers = 2, hiddenSize = 64, embedSize = 512, vocabSize = vocabSize,\
-		device = 'cpu')
+		device = 'cuda')
 
 best_spamF1Score = 0
-numEpoches_max = 100
+numEpoches_max = 1000
 epoch = 0
 # if perfromance dose not imporve for certain number of consecutive epoches stop the training
 numEoches_stopCriteria = 10 
