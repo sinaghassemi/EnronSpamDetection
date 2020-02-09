@@ -58,22 +58,6 @@ class EnronLoader(object):
 					similarity_ratio = num_identicalLines/len(content_1.split('\n'))
 					if similarity_ratio > 0.9:
 						num_contentsToBeRemoved.add(num_2)
-		'''
-				similarity_contents[(num_1,num_2)] = similarity_ratio
-		print('')
-		similar_contents =  {} # keys : first content, valuse: list of similar contents
-		for (num_content1,num_content2),v in similarity_contents.items():
-			if v > 0.9:
-				if num_content1 in similar_contents.keys():
-					similar_contents[num_content1] += [num_content2]
-				else:
-					similar_contents[num_content1] = [num_content2] 
-
-		set_contentsToRemove = set([])
-		for contentNum,contentNumList in similar_contents.items():
-			for num in contentNumList:
-				set_contentsToRemove.add(num)
-		'''
 		new_contentList=[]
 		for i in range(len(contentList)):
 			if i not in num_contentsToBeRemoved:
