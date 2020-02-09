@@ -56,8 +56,6 @@ else:
 		pickle.dump(contentList_spam, f)
 	print("*"*15)
 
-
-
 	dataLoader_ham = EnronLoader(filesDir=ham_dataPath)
 	print("number of ham files: %d" % len(dataLoader_ham.filesList))
 	contentList_ham = dataLoader_ham.readFiles()
