@@ -176,31 +176,28 @@ The goal of this project is to detect whether an E-mail is spam or not (ham) sol
 
 class EnronLoader(object):
 	def __init__(self,**kwargs):
-		spamDir = kwargs.get('spamDir')
-		hamDir  = kwargs.get('hamDir')
-		if spamDir == None or hamDir == None:
-			raise NameError("the directory containing ham and spam should be provided")
-		self.spamFiles = self._filesToBeRead(spamDir)
-		self.hamFiles  = self._filesToBeRead(hamDir)
-
+		self.filesDir = kwargs.get('filesDir')
+		if self.filesDir == None:
+			raise NameError("the directory should be provided")
+		self._filesToBeRead()
 		# Punctuation marks to be removed
 		self.punctuation_marks = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\
-		'/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~','\t']
+		 '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~','\t']
 		# list of stop words
 		self.stopwords_list = stopwords.words('english')
 		# Lines including the header words will be eliminated
 		self.header_words = ['message-id:', 'date:', 'from:','sent:', 'to:','cc:','bcc', 'mime-version:', 'content-type:', \
 		'content-transfer-encoding:', 'x-from:', 'x-to:', 'x-cc:', 'x-bcc:', 'x-origin:', 'x-filename:', 'x-priority:', 'x-msmail-priority:',\
-		'x-mimeole:','return-path:','delivered-to:','received:','x-mailer:','thread-index:','content-class:','x-mimeole:','x-originalarrivaltime:',\
+		 'x-mimeole:','return-path:','delivered-to:','received:','x-mailer:','thread-index:','content-class:','x-mimeole:','x-originalarrivaltime:',\
 		'charset=','http://','by projecthoneypotmailserver','--=','clamdscan:','error:','alias:','=_nextpart_','href=','src=','size=','type=']
 		# Words in the following list will be removed to avoid words which are only presented in one class (ham or spam) (distinctive words) 
 		self.distinctive_words = ['hou','kaminski', 'kevin', 'ena','vince', 'enron','stinson','shirley','squirrelmail','ect','smtp','mime','gif',\
 		'xls','mx','louise','ferc','ppin', 'wysak', 'tras', 'rien', 'saf', 'photoshop', 'viagra', 'cialis', 'xual', 'voip',\
-		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg','ist', 'slashnull', 'xp', 'localhost', 'dogma',\ 			'authenticated','ees','esmtp','john','fw','postfix','xp','3a','steve','cs','mike','macromedia','http','secs', 'futurequest','scheduling']
+		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg','ist', 'slashnull', 'xp', 'localhost', 'dogma', 'authenticated','ees','esmtp','john','fw','postfix','xp','3a','steve','cs','mike','macromedia','http','secs', 'futurequest','scheduling']
 		# if the number of words exceeded maxContentLength, trunk the content
 		self.maxContentLength = kwargs.get('maxWords',1000)
 ```
-To initilize the class, two keywords arguments `spamDir` and `hamDir` should be provided which locates the raw files belonging to spam and ham E-mails. Moreover, the punctuation marks is provided which will be removed from the content as they are not usefull for classification and take space in the vocabulary. ` header_words ` is the list of words indicating the lines in the E-mail which are not body and the subject such as 'message-id:' and 'date:'. To challenge the classification methods and their generalization capability, I also remove the most common words which are only present in one of the catagories(ham or spam), some of these words which are only present in ham E-mails are the name of Enron employees which the ham files are originated from,  or the words that are only seen in spam files are the name of the companies which have sent spam E-mails. Therefore, I decided to exclude these words to further challenge the classifiers and prevent overfitting on dataset. In the next part, we will see how these distintive words are chosen.
+To initilize the class, keyword arguments `filesDir` should be provided which locates the raw files belonging to spam or ham E-mails. Moreover, the punctuation marks is provided which will be removed from the content as they are not usefull for classification and take space in the vocabulary. ` header_words ` is the list of words indicating the lines in the E-mail which are not body and the subject such as 'message-id:' and 'date:'. To challenge the classification methods and their generalization capability, I also remove the most common words which are only present in one of the catagories(ham or spam), some of these words which are only present in ham E-mails are the name of Enron employees which the ham files are originated from,  or the words that are only seen in spam files are the name of the companies which have sent spam E-mails. Therefore, I decided to exclude these words to further challenge the classifiers and prevent overfitting on dataset. In the next part, we will see how these distintive words are chosen.
 
 ```python
 class EnronLoader(object):
@@ -208,28 +205,45 @@ class EnronLoader(object):
 	.
 	.
 
-	def _filesToBeRead(self,path):
+	def readFiles(self):
+		print('*'*5 + 'reading files' + '*'*5)
+		content = self._preprocess(self.filesList)
+		print("")
+		return content
+	def _filesToBeRead(self):
 	# function to return list of all files in leaves given a root tree directory
-		fileList = []
-		for root,dirs,files in os.walk(path):
+		self.filesList = []
+		for root,dirs,files in os.walk(self.filesDir):
 			if len(dirs) == 0: 	# leaves : containing the files
 				for f in files:
-					fileList += [os.path.join(root,f)]
-		return fileList
-
-	def readHam(self):
-		print('\n'+'*'*5 + 'reading ham files' + '*'*5)
-		content = self._preprocess(self.hamFiles)
-		return content
-
-	def readSpam(self):
-		print('\n'+'*'*5 + 'reading spam files' + '*'*5)
-		content = self._preprocess(self.spamFiles)
-		return content
+					self.filesList += [os.path.join(root,f)]
+		self.filesList 	= self.filesList[:1000]
+	def removeDuplicates(self,contentList):
+		similarity_contents={} # keys: tuple of content number in list,values : fraction of identitcal lines
+		num_contentsToBeRemoved = set([])
+		for num_1 in range(len(contentList)):
+			for num_2 in range(num_1+1,len(contentList)):
+				if num_2 not in num_contentsToBeRemoved:
+					print("measuring similarity [%d, %d]"%(num_1,num_2),end='\r')
+					content_1 = contentList[num_1]
+					content_2 = contentList[num_2]
+					num_identicalLines = 0
+					for line_1 in content_1.split('\n'):
+						for line_2 in content_2.split('\n'):
+							if line_1 == line_2:
+								num_identicalLines += 1
+					similarity_ratio = num_identicalLines/len(content_1.split('\n'))
+					if similarity_ratio > 0.9:
+						num_contentsToBeRemoved.add(num_2)
+		new_contentList=[]
+		for i in range(len(contentList)):
+			if i not in num_contentsToBeRemoved:
+				new_contentList+=[contentList[i]]
+		return new_contentList
 
 ```
 
-The class `EnronLoader` also includes a method `_filesToBeRead(self,path)` which returns the list of files given the root directory. Methods `readHam(self)` and `readSpam(self)` are used to read and preprocess all the files in `spamDir` and `hamDir` using  `preprocess` method.
+The class `EnronLoader` also includes a method `_filesToBeRead` which returns the list of files given the root directory. Methods `readFiles`  are used to read and preprocess all the files in using  `preprocess` method. `removeDuplicates` remove duplicates in a given contents list such that contents with more than 90% identical lines will be removed.
 
 
 ```python
