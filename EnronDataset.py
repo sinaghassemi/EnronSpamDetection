@@ -40,20 +40,21 @@ class EnronLoader(object):
 			if len(dirs) == 0: 	# leaves : containing the files
 				for f in files:
 					self.filesList += [os.path.join(root,f)]
-		self.filesList 	= self.filesList[:-1]
+		self.filesList 	= self.filesList[:1000]
 	def removeDuplicates(self,contentList):
 		similarity_contents={} # keys: tuple of content number in list,values : fraction of identitcal lines
-		for (num_1,content_1) in enumerate(contentList):
-			for (num_2,content_2) in enumerate(contentList):
-				if num_1 != num_2:
-					print("measuring similarity [%d, %d]"%(num_1,num_2),end='\r')
-					num_identicalLines = 0
-					for line_1 in content_1.split('\n'):
-						for line_2 in content_2.split('\n'):
-							if line_1 == line_2:
-								num_identicalLines += 1
-					similarity_ratio = num_identicalLines/len(content_1.split('\n'))
-					similarity_contents[(num_1,num_2)] = similarity_ratio
+		for num_1 in range(len(contentList)):
+			for num_2 in range(num_1+1,len(contentList)):
+				print("measuring similarity [%d, %d]"%(num_1,num_2),end='\r')
+				content_1 = contentList[num_1]
+				content_2 = contentList[num_2]
+				num_identicalLines = 0
+				for line_1 in content_1.split('\n'):
+					for line_2 in content_2.split('\n'):
+						if line_1 == line_2:
+							num_identicalLines += 1
+				similarity_ratio = num_identicalLines/len(content_1.split('\n'))
+				similarity_contents[(num_1,num_2)] = similarity_ratio
 		print('')
 		similar_contents =  {} # keys : first content, valuse: list of similar contents
 		for (num_content1,num_content2),v in similarity_contents.items():
