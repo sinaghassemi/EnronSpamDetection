@@ -11,7 +11,7 @@ from EnronDataset import EnronLoader,EnronBatchLoader
 from LSTM import ClassifierLSTM
 from LogisticRegression import ClassifierLogisticRegression
 import random
-
+import pickle
 ###  To prevent different results on each run due to random generators ##########
 
 # this will seed torch's RNG for the main process, 
@@ -33,12 +33,39 @@ ham_dataPath = 'data/ham/'
 spam_dataPath = 'data/spam/'
 BoW_size =  512 	# the number of words used in bag of words which is used as features for : naive bayes, k-nn, decision tree and logistic regresion classifiers
 
-dataLoader = EnronLoader(hamDir=ham_dataPath,spamDir=spam_dataPath)
-print("number of spam files: %d" % len(dataLoader.spamFiles))
-print("number of ham files: %d" % len(dataLoader.hamFiles))
+hamPreprocessed = 'hamPreprocessed' 
+spamPreprocessed = 'spamPreprocessed'
+alreadyPreprocessed = True
 
-contentList_spam = dataLoader.readSpam()
-contentList_ham = dataLoader.readHam()
+if alreadyPreprocessed:
+	print("Already Pre-processed, loading files")
+	with open(spamPreprocessed, 'rb') as f:
+		contentList_spam = pickle.load(f)
+
+	with open(hamPreprocessed, 'rb') as f:
+		contentList_ham = pickle.load(f)
+else:
+	dataLoader = EnronLoader(hamDir=ham_dataPath,spamDir=spam_dataPath)
+	print("number of spam files: %d" % len(dataLoader.spamFiles))
+	print("number of ham files: %d" % len(dataLoader.hamFiles))
+
+	contentList_spam = dataLoader.readSpam()
+	contentList_ham = dataLoader.readHam()
+
+	print("*"*5 + 'removing duplicates file'+"*"*5)
+	print("number of spam E-mails before removing duplicates:%d" % len(contentList_spam))
+	contentList_spam = dataLoader.removeDuplicates(contentList_spam)
+	print("number of spam E-mails after removing duplicates:%d" % len(contentList_spam))
+
+	print("*"*5 + 'removing duplicates file'+"*"*5)
+	print("number of ham E-mails before removing duplicates:%d" % len(contentList_ham))
+	contentList_ham = dataLoader.removeDuplicates(contentList_ham)
+	print("number of ham E-mails after removing duplicates:%d" % len(contentList_ham))
+
+	with open(hamPreprocessed, 'wb') as f:
+		pickle.dump(contentList_ham, f)
+	with open(spamPreprocessed, 'wb') as f:
+		pickle.dump(contentList_spam, f)
 
 ##### Concatenating list of contents to a single string for further analysis 
 allContent_spam = " ".join([content for content in contentList_spam])

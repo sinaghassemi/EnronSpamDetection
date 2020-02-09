@@ -45,14 +45,51 @@ class EnronLoader(object):
 		return fileList
 
 	def readHam(self):
-		print('\n'+'*'*5 + 'reading ham files' + '*'*5)
+		print('*'*5 + 'reading ham files' + '*'*5)
 		content = self._preprocess(self.hamFiles)
+		print("")
 		return content
 
 	def readSpam(self):
-		print('\n'+'*'*5 + 'reading spam files' + '*'*5)
+		print('*'*5 + 'reading spam files' + '*'*5)
 		content = self._preprocess(self.spamFiles)
+		print("")
 		return content
+
+	def removeDuplicates(self,contentList):
+		#print('*'*5 + 'removing duplicates contents' + '*'*5)
+		similarity_contents={} # keys: tuple of content number in list
+		for (num_1,content_1) in enumerate(contentList):
+			for (num_2,content_2) in enumerate(contentList):
+				if num_1 != num_2:
+					print("measuring similarity [%d, %d]"%(num_1,num_2),end='\r')
+					num_identicalLines = 0
+					for line_1 in content_1.split('\n'):
+						for line_2 in content_2.split('\n'):
+							if line_1 == line_2:
+								num_identicalLines += 1
+					similarity_ratio = num_identicalLines/len(content_1.split('\n'))
+					similarity_contents[(num_1,num_2)] = similarity_ratio
+		print('')
+		similar_contents =  {} # keys : first content, valuse: list of similar contents
+		for (num_content1,num_content2),v in similarity_contents.items():
+			if v > 0.9:
+				if num_content1 in similar_contents.keys():
+					similar_contents[num_content1] += [num_content2]
+				else:
+					similar_contents[num_content1] = [num_content2] 
+
+		set_contentsToRemove = set([])
+		for contentNum,contentNumList in similar_contents.items():
+			for num in contentNumList:
+				set_contentsToRemove.add(num)
+
+		#print("%d E-mails out of %d is removed"%(len(set_contentsToRemove),len(contentList)))
+		new_contentList=[]
+		for i in range(len(contentList)):
+			if i not in set_contentsToRemove:
+				new_contentList+=[contentList[i]]
+		return new_contentList
 
 	def _preprocess(self,files_list):
 		content_list=[]
