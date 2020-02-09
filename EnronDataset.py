@@ -8,16 +8,10 @@ nltk.download('stopwords')
 
 class EnronLoader(object):
 	def __init__(self,**kwargs):
-		spamDir = kwargs.get('spamDir')
-		hamDir  = kwargs.get('hamDir')
-		if spamDir == None or hamDir == None:
-			raise NameError("the directory containing ham and spam should be provided")
-		self.spamFiles = self._filesToBeRead(spamDir)
-		self.hamFiles  = self._filesToBeRead(hamDir)
-
-		self.spamFiles = self.spamFiles[:1000]
-		self.hamFiles = self.hamFiles[:1000]
-
+		self.filesDir = kwargs.get('filesDir')
+		if self.filesDir == None:
+			raise NameError("the directory should be provided")
+		self._filesToBeRead()
 		# Punctuation marks to be removed
 		self.punctuation_marks = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.',\
 		 '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~','\t']
@@ -34,31 +28,21 @@ class EnronLoader(object):
 		'dynegy', 'skilling', 'mmbtu', 'westdesk', 'epmi', 'fastow', 'bloomberg','ist', 'slashnull', 'xp', 'localhost', 'dogma', 'authenticated','ees','esmtp','john','fw','postfix','xp','3a','steve','cs','mike','macromedia','http','secs', 'futurequest','scheduling']
 		# if the number of words exceeded maxContentLength, trunk the content
 		self.maxContentLength = kwargs.get('maxWords',1000)
-
-	def _filesToBeRead(self,path):
+	def readFiles(self):
+		print('*'*5 + 'reading files' + '*'*5)
+		content = self._preprocess(self.filesList)
+		print("")
+		return content
+	def _filesToBeRead(self):
 	# function to return list of all files in leaves given a root tree directory
-		fileList = []
-		for root,dirs,files in os.walk(path):
+		self.filesList = []
+		for root,dirs,files in os.walk(self.filesDir):
 			if len(dirs) == 0: 	# leaves : containing the files
 				for f in files:
-					fileList += [os.path.join(root,f)]
-		return fileList
-
-	def readHam(self):
-		print('*'*5 + 'reading ham files' + '*'*5)
-		content = self._preprocess(self.hamFiles)
-		print("")
-		return content
-
-	def readSpam(self):
-		print('*'*5 + 'reading spam files' + '*'*5)
-		content = self._preprocess(self.spamFiles)
-		print("")
-		return content
-
+					self.filesList += [os.path.join(root,f)]
+		self.filesList 	= self.filesList[:-1]
 	def removeDuplicates(self,contentList):
-		#print('*'*5 + 'removing duplicates contents' + '*'*5)
-		similarity_contents={} # keys: tuple of content number in list
+		similarity_contents={} # keys: tuple of content number in list,values : fraction of identitcal lines
 		for (num_1,content_1) in enumerate(contentList):
 			for (num_2,content_2) in enumerate(contentList):
 				if num_1 != num_2:
@@ -96,9 +80,8 @@ class EnronLoader(object):
 		numOfFiles = len(files_list)
 		for (num_file,File) in enumerate(files_list):
 			print("Reading and pre-processing content [% 5d / %d] : %s" % (num_file+1,numOfFiles,File),end="\r")
-			f = open(File,'r',encoding="ISO-8859-1")
-			content = f.read()
-			f.close()
+			with open(File,'r',encoding="ISO-8859-1") as f:
+				content = f.read()
 			# Some Preprocessing over the content : 
 			# 1. Converting all letters to lower case
 			content = content.lower()
