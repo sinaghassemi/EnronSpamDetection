@@ -278,12 +278,12 @@ test_conf = computeConfMatrix(prediction,test_label)
 test_metrics = performanceMetrics(test_conf)
 
 
-'''
+
 #plt.rcParams['figure.dpi'] = 200
 plt.figure()
-plot_tree(classifier.fit(train_data, train_label),max_depth=None, feature_names=mostCommonWords, class_names=['ham','spam'])
+plot_tree(classifier.fit(train_data, train_label),max_depth=4, feature_names=mostCommonWords, class_names=['ham','spam'])
 plt.show()
-'''
+
 
 
 predoction_prob = classifier.predict_proba(test_data)
