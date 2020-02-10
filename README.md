@@ -1,18 +1,17 @@
 # Spam Detection over Enron-Spam dataset
 
-The repository contains the codes addressing spam detection over [Enron-Spam](http://www2.isprs.org/commissions/comm3/wg4/2d-sem-label-vaihingen.html) dataset. First, dataset, pre-processing, methodology, and results are described, then, more details about implementation and the provided codes are given. 
+The repository contains the codes addressing spam detection over [Enron-Spam](http://www2.isprs.org/commissions/comm3/wg4/2d-sem-label-vaihingen.html) dataset. In the following, dataset, pre-processing, classification methodology, and the results are provided, in the next part, implementation details along with the provided codes are described. 
 
-# 1. Dataset,pre-processing classifiacation methods
 
-## 1.1 Dataset
+# 1. Dataset
 
 Enron-Spam dataset includes non-spam (ham) messages from six Enron employees who had large mailboxes, and also it includes spam messages from four different sources namely: the SpamAssassin corpus, the Honeypot project, the spam collection of Bruce Guenter, and spam collected by the authors of the [paper](http://www2.aueb.gr/users/ion/docs/ceas2006_paper.pdf).
 
 
 
-# 1.2 Pre-processing
+# 2. Pre-processing
 
-In this project, I use spam and ham E-mails in their raw format thus it is required to apply several pre-processing methods over the raw data to prepare it for feature extraction to obtain the features which will be used as input to the classifier. Here, the main goal is to remove the redundant data that may increase our vocabulary size and also prepare a reliable dataset for measuring classifier performance and generalization.
+In this project, spam and ham E-mails in their raw format are used, so it is required to apply several pre-processing methods over the raw data to prepare it for features selection stage where the input features to the classifier are extracted from pre-processed data. Here, the main goal is to remove the redundant data that may increase our vocabulary size. Moreover, pre-processing should assure that the classification performance is not limited to this dataset and it can be generalized to real-world applications.
 
 The preprocessing can be summarized in the following list:
 
@@ -26,18 +25,23 @@ The preprocessing can be summarized in the following list:
 
 - The punctuation marks are removed from the contents.
  
-- Stop words such as whom, this, that, ... which can not provide useful information are also removed in pre-processing.
+- Stop words such as whom, this, that, etc which can not provide useful information are also removed in pre-processing.
 
 - To challenge the classification methods and their generalization capability, I also remove the most common words which are only present in one of the categories (ham or spam), some of these words which are only present in ham E-mails are the name of Enron employees which the ham files are originated from,  or the words that are only seen in spam files are the name of the companies which have sent spam E-mails. Therefore, I decided to exclude these words to further challenge the classifiers and prevent overfitting on the dataset.
+
+- Lower and upper boundary is applied to the number of word characters, therefore one character words and words with more than 40 characters are removed. These words are resulted from previous pre-processing steps and most of them are the remaining HTML syntax.
+
+
+- An upper boundary is also applied to the number of words in the E-mail content, so E-mails with more than 1000 words are truncated. We will see this is necessary to control the input size of the LSTM classifier.
 
 - After applying these pre-processing, since there are multiple E-mails in both spam and ham classes, I removed the duplicates by measuring the similarity of E-mails in each class, this similarity is measured by the fraction of identical lines to all the E-mail lines, I remove those duplicates with more than 90 % similarity. Removing duplicates is essential since their presence increases the possibility that a duplicated sample falls into both training and test set which makes the classifier prone to overfitting.
 
 
-# 1.3 Feature extraction
+# 3. Feature Extraction
 
-After reading and pre-processing the E-mails contents in both spam and ham classes, tokenization is performed. Tokenization is the process of splitting the text into small parts called tokens. Here, tokens are words hence tokenization is the process of splitting the E-mail content into words.
+After pre-processing the E-mails contents in both spam and ham classes, tokenization is performed. Tokenization is the process of splitting the text into small parts called tokens. Here, tokens are words hence tokenization is the process of splitting the E-mail content into words.
 
-Then, for all the classifiers except LSTM, I extract features using "bag of words" method. Therefore, first, a vocabulary is constructed using contents in both ham and spam classes. Then, a number of most common words (512 words in our experiment) is selected as the words in the bag. For each E-mail in the dataset, the occurrence of each word in the bag is counted for that E-mail. As a result, the data would be a two-dimensional array as following:
+Then, for all the classifiers except LSTM, I extract features using "bag of words" method. Therefore, first, a vocabulary is constructed using contents in both ham and spam classes. Then, a number of most common words (512 words in our experiment) is selected for the words in the bag. For each E-mail in the dataset, the occurrence of each word in the bag is counted in that E-mail. As a result, the data would be a two-dimensional array as following:
 
 
 
@@ -46,7 +50,7 @@ Then, for all the classifiers except LSTM, I extract features using "bag of word
 where `n` is the number of samples (E-mails) and `m` is the number of words in the bag, and `c_ij` indicates the number which j-th word appeared in i-th sample.
 
 
-However, in the case of LSTM, the features are extracted using a different approach. Since LSTM can take as input, sequences of different lengths, our input dimension can vary over different samples. Therefore, bag of words is not necessarily required, and LSTM can take as input sequences of words in the E-mail contents leading to better performance by capturing the pattern in words appearance in ham and spam classes. 
+However, in the case of LSTM, the features are extracted using a different approach. Since LSTM can take as input, sequences of different lengths, our input dimension can vary over different samples. Therefore, bag of words is not necessarily required, and LSTM can take as input sequences of words in the E-mail contents leading to better performance by capturing the pattern in words order in ham and spam classes. 
 
 Nevertheless, as before, tokenization is performed to split E-mail contents into words. Then, each word is indexed using a vocabulary, however this time I select much larger vocabulary (8000 words) as the words will be mapped into a lower 512-dimensional embedding space. This embedding is also learned during the LSTM training such that the words which have similar semantic characteristics will be mapped into a similar region in embedding space. Nonetheless, these semantic characteristics will be defined by classifier during back-propagation. The embedding function and LSTM are trained end-to-end, and the input data would be as following:
 
@@ -54,11 +58,17 @@ Nevertheless, as before, tokenization is performed to split E-mail contents into
 ![math](readMe/maths/11.png "")
 
 
-Here, `L` is the length of the largest sample (longest E-mail) and `W_ij` is the word index in  the i-th sample (E-mail) and at j-th position in the sequence. In contrast to bag of words, the number of words is not counted. However, to provide a 2-dimensional array we pad the sequence with length than `L` with zeros.
+Here, `L` is the length of the largest sample (longest E-mail) and `W_ij` is the word index in  the i-th sample (E-mail) and at j-th position in the sequence. In contrast to bag of words, the number of words is not counted. However, to provide a 2-dimensional array we pad the sequence with length less than `L` with zeros.
 
-# 1.4 Classification
 
-In this project to perform classification, different machine learning methods are applied: Multinomial Naive Bayes, K-Nearest Neighbor, Decision Tree, Logistic Regression and LSTM classifiers as detailed in the following:
+# 4. Training, Validation and Test Set
+
+Next, the input features to the classifier are subdivided into 3 sets: training, validation and test sets including 50%, 25%, and 25% of the samples each set respectively. Training samples are used in the training stage where, in the case of optimization, the classifier parameters are learned from the data. Validation samples are used to measure the classifier performance during training to fine-tune hyperparameters or select the best classifier parameters. Then, the test set is used to measure the optimized classifier, the performance on the test set expected to be close to the performance in a real-world application.
+
+
+# 5. Classification Methodologies
+
+In this project to perform classification, different machine learning methods are applied: Multinomial Naive Bayes, K-Nearest Neighbor, Decision Tree, Logistic Regression and LSTM classifiers as will be detailed in the following:
 
 **Multinomial Naive Bayes:** The first classification approach is naive Bayes classifier, as its name implies it uses Bayes' theorem and with the assumption that the features (in our case, selected words counts) are independent. Therefore, the probability that a sample belongs to a class `y` given its feature vectors `x_1 ... x_n` can be estimated using Bayes' theorem:
 
@@ -124,12 +134,16 @@ where `p` is either zero or one (ham or spam). the loss is then back-propagated 
 **LSTM:** Long Short Term Memory (LSTM) network is a special type of recurrent neural network that can learn long-term dependencies in the input data. LSTM networks have been used in many applications in the field of time series and sequence data. These networks are able to learn and remember information for long periods of time. They achieve this by using a set of gates such as input and forget gates. These gates use a non-linear function such as sigmoid to choose whether to remember a part of the information or suppress it conditioned on input data itself. Moreover, LSTM has hidden and cell states which are fed into the next timestamps further improving the LSTM networks performance:
 
 
+
+![math](readMe/maths/20.png "")
+
+
 ![math](readMe/maths/10.png "")
 
 
 Where `x_t` in input vector, `f_t` is forget gate vector, `i_t` is input gate vector, `o_t` output gate vector and `h_t` and `c_t` are hidden and cell state vectors. In the case of stacked LSTM, one cell outputs are used as input to the next layer LSTM cell which helps to learn more sophisticated patterns in the input sequence. LSTMs networks such as common neural networks are trained by minimizing a loss function and using an optimization strategy. 
 
-# 3. Results
+# 6. Results
 
 Results are given in the terms of accuracy, precision, recall, F1-score and also ROC curves for all classifiers.
 
@@ -167,10 +181,10 @@ True positive rate:
 
 
 
-It should be noted that all these classification methods can further be improved by performing a grid search over their hyperparameters. For instance, in the case of K-NN, it is expected to obtain different results by choosing different values for `n`, or in the case of decision tree classifier, the results would vary by choosing different criterion such as entropy to measure the quality of split at internal nodes. Also, the size of vocabulary (number of words in the bag) plays an important role in the performance. However, the purpose here is to provide a simple comparison between these different classifiers.
+It should be noted that all these classification methods can further be improved by performing a grid search over their hyperparameters. For instance, in the case of K-NN, it is expected to obtain different results by choosing different values for `n`, or in the case of decision tree classifier, the results would vary by choosing different criterion such as entropy to measure the quality of split at internal nodes. Also, the size of vocabulary (number of words in the bag) plays an important role in the performance. However, the purpose here is to provide a  comparison between these different classifiers.
 
 
-In the following table the performance metric is given over the test set for the spam class:
+In the following table, the performance metric is given over the test set for the spam class:
 
 
 | Method        	| Accuracy [%]  | Precision [%] | Recall  [%] 	| F1-Score  [%] |
@@ -192,30 +206,29 @@ The decision tree and K-nearest neighbors classifier are not probabilistic metho
 
 
 
-# 2. Implementation
+# 7. Implementation
 
 The codes organized as following : 
 -  The main file `main.py` used to apply classification and measure the performance.
 -  The file `EnronDataset.py` contains:
-	- Class `EnronLoader` to read and pre-process E-mail contents.
-	- Class `EnronBatchLoader` returns an iterable object to be used for mini-batch loading during training/testing neural networks.
-- The file `utilities.py` includes usefull functions for contents analysis and also measuring classification performance.
+    - Class `EnronLoader` to read and pre-process E-mail contents.
+    - Class `EnronBatchLoader` returns an iterable object to be used for mini-batch loading during training/testing neural networks.
+- The file `utilities.py` includes useful functions for contents analysis and also measuring classification performance.
 - The file `LogisticRegression.py` implement `ClassifierLogisticRegression` class for Logistic Regression Classifier.
-- The file `LSTM.py` implement `ClassifierLSTM` class for Long Short-Term Memory networks.
+- The file `LSTM.py` implements `ClassifierLSTM` class for Long Short-Term Memory networks.
 
 
-The methods used for spam classification are : Decision Tree, Multinomial Naive Bayes, K-Nearest Neighbors classifiers (scikit-learn) and also Logistic Regression and LSTM (PyTorch).
-For extracting the features for all classifiers except LSTM, we use bag of words method in which we selected a number of most common words in E-mails (after pre-processing), and for each E-mail in the dataset we count the number of selected words in that E-mail hence our data would be two dimentional array where the number of rows is the number of samples and the number of columns is the number of select words (words in the bag). However, as we will see in the next parts, since LSTM can takes sequence input of different sizes, we use word embedding techniuqe for extracting features for LSTM calssifier.
+The methods used for spam classification are: Decision Tree, Multinomial Naive Bayes, K-Nearest Neighbors classifiers (scikit-learn) and also Logistic Regression and LSTM (PyTorch).
+For extracting the features for all classifiers except LSTM, we use bag of words method in which we selected a number of most common words in E-mails (after pre-processing), and for each E-mail in the dataset, we count the number of selected words in that E-mail hence our data would be two-dimensional array where the number of rows is the number of samples and the number of columns is the number of select words (words in the bag). However, as we will see in the next parts since LSTM can take sequence input of different sizes, we use the word embedding technique for extracting features for the LSTM classifier.
 
-The classifcation performance is measured using accuracy, precision, recall, and f1-score for both spam and ham classes as well as RoC curves for all classifiers.
+The classification performance is measured using accuracy, precision, recall, and f1-score for both spam and ham classes as well as RoC curves for all classifiers.
 
 But, first of all, to classify E-mails to spam and ham classes, we pre-process the raw E-mails using `EnronLoader` class as following:
 
+# 7.1 Pre-processing
 
-# 2.1 Pre-processing
 
-
-The goal of this project is to detect whether an E-mail is spam or not (ham) solely based on the content and the subject. Therefore, in pre-processing stage we remove all other parts of an email except subject and the body or the content. For reading and preprocessing the raw Enron-spam dataset, `Class EnronLoader` is provided in `EnronDataset.py`.
+The goal of this project is to detect whether an E-mail is a spam or not (ham) solely based on the content and the subject. Therefore, in the pre-processing stage, we remove all other parts of an email except the subject and the body or the content. For reading and preprocessing the raw Enron-spam dataset, `Class EnronLoader` is provided in `EnronDataset.py`.
 
 
 
@@ -244,7 +257,7 @@ class EnronLoader(object):
 		# if the number of words exceeded maxContentLength, trunk the content
 		self.maxContentLength = kwargs.get('maxWords',1000)
 ```
-To initilize the class, keyword arguments `filesDir` should be provided which locates the raw files belonging to spam or ham E-mails. Moreover, the punctuation marks is provided which will be removed from the content as they are not usefull for classification and take space in the vocabulary. ` header_words ` is the list of words indicating the lines in the E-mail which are not body and the subject such as 'message-id:' and 'date:'. To challenge the classification methods and their generalization capability, I also remove the most common words which are only present in one of the catagories(ham or spam), some of these words which are only present in ham E-mails are the name of Enron employees which the ham files are originated from,  or the words that are only seen in spam files are the name of the companies which have sent spam E-mails. Therefore, I decided to exclude these words to further challenge the classifiers and prevent overfitting on dataset. In the next part, we will see how these distintive words are chosen.
+To initialize the class, keyword arguments `filesDir` should be provided which locates the raw files belonging to spam or ham E-mails. Moreover, the punctuation marks are provided which will be removed from the content as they are not useful for classification and take space in the vocabulary. ` header_words ` is the list of words indicating the lines in the E-mail which are not body and the subject such as 'message-id:' and 'date:'. To challenge the classification methods and their generalization capability, I also remove the most common words which are only present in one of the categories(ham or spam), some of these words which are only present in ham E-mails are the name of Enron employees which the ham files are originated from,  or the words that are only seen in spam files are the name of the companies which have sent spam E-mails. Therefore, I decided to exclude these words to further challenge the classifiers and prevent overfitting on the dataset. In the next part, we will see how these distinctive words are chosen.
 
 ```python
 class EnronLoader(object):
@@ -390,23 +403,26 @@ class EnronLoader(object):
 		return content_list
 ```
 
-The `preprocess` method read and process the raw content from a list of files using in 12 steps: first we convert all letters to lowercase, then lines that contain E-mail header such as message-id:, date:, from:, etc are removed form the content preserving only body and the subject. In third step, regular expression are used to remove HTTP syntax as they will not contribute to the classification. In the following in step 4, 5, and 7 we replace any E-mail or Website address or any time and date or number with the words : 'emailaddrs' , 'webaddrs' , 'time', 'date, and 'number' respectively.
-The logic behind this pre-processing is that the actual E-mail or website address or a number or a date will not provide information for detecting spam E-mails, and if it does, it will be limited to this dataset and will not contribute to the genralization of classifier. For instance, if in this dataset spam filters are coming from a certain number of companies, then the classifier will be trained to detect spam based on the web address of these comapanies which in real application it might not include all types of spam. In addition, using generelized term such as 'emailaddrs' for all E-mail addresses will prevent the unnecessary increase of the vocabulary size.
-In the next lines of code, the punctuation marks, mutiple cosecutive spaces are eliminated from the content. 
-Stop words such as: whom, this, that, ... which can not provide useful information are also removed in pre-processing. 
-After these cleaning attempts, there might remained some meaningless one character words or very long words, therefore we remove these words by setting boundary for word length.
-In the next part, there might be E-mails that after preprocessing do not include any words which will not be considered. In the other hand, some E-mails contain a huge number of words, as we will see in the next part, to prevent very large input demension for LSTM classifier, we set a upper bpundary for number of words in the E-mail, E-mail which exceed this boundary will be truncated.
+The `preprocess` method read and process the raw content from a list of files using in 12 steps: first, we convert all letters to lowercase, then lines that contain E-mail header such as message-id:, date:, from:, etc are removed from the content preserving only body and the subject. In the third step, regular expression is used to remove HTTP syntax as they will not contribute to the classification. In the following in steps 4, 5, and 7 we replace any E-mail or Website address or any time and date or number with the words : 'emailaddrs' , 'webaddrs' , 'time', 'date, and 'number' respectively.
 
-The following is the histogram of number of words in both spam and ham folders after applying the preprocessing.
-As can be seen the emials which are truncated at 1000 words are very small portion of the data (less than 1 %) hence we will not loss information by setting boundary on number of E-mail words.
+The logic behind this pre-processing is that the actual E-mail or website address or a number or date will not provide information for detecting spam E-mails, and if it does, it will be limited to this dataset and will not contribute to the generalization of the classifier. For instance, if in this dataset spam filters are coming from a certain number of companies, then the classifier will be trained to detect spam based on the web address of these companies which in real-world application it might not include all types of spam. Besides, using generalized terms such as 'emailaddrs' for all E-mail addresses will prevent the unnecessary increase of the vocabulary size.
+In the next lines of code, the punctuation marks, multiple consecutive spaces are eliminated from the content. 
+Stop words such as whom, this, that, etc which can not provide useful information are also removed in pre-processing. 
+After these cleaning attempts, there might remain some meaningless one character words or very long words, therefore we remove these words by setting a boundary for word length.
+In the next part, there might be E-mails that after preprocessing do not include any words which will not be considered. On the other hand, some E-mails contain a huge number of words, as we will see in the next part, to prevent a very large input dimension for LSTM classifier, we set an upper boundary for the number of words in the E-mail, E-mail which exceed this boundary will be truncated.
+
+The following is the histogram of the number of words in both spam and ham folders after applying the preprocessing.
+As can be seen, the emails which are truncated at 1000 words are a very small portion of the data (less than 1 %) hence we will not lose information by setting a boundary on the number of E-mail words.
+
+
 
 ![vai](readMe/ContentLenghts.png "The histogram")
 
 
 
-# 2.2 Data loader for LSTM and logistic regression classifier
+# 7.2 Data loader for LSTM and logistic regression classifier
 
-`EnronBatchLoader` is a iterator provided in `EnronDataset.py` to iterate over pre-processed Enron dataset to be used while training/testing logistic regression and LSTM networks.
+`EnronBatchLoader` is an iterator provided in `EnronDataset.py` to iterate over the pre-processed Enron dataset to be used while training/testing logistic regression and LSTM networks.
 
 
 
@@ -469,13 +485,12 @@ class EnronBatchLoader():
 ```
 
 In `EnronBatchLoader`, batch size (integer), data (PyTorch Tensor), and label (PyTorch Tensor) are provided as keyword arguments,
-nevertheless, when used as data loader for LSTM, it also takes sequence length as argument. The data loader in each iteration returns a mini-batch of data and labels (shuffled if shuffled is True) and if LSTM is ture also a batch of sequence length. For LSTM, it is required to sort data in each mini-batch based on sequence length such that the longest sequence should be first. This is necessary as we will see when we trained LSTM for sequences with different lengths.
+nevertheless, when used as data loader for LSTM, it also takes sequence length as an argument. The data loader in each iteration returns a mini-batch of data and labels (shuffled if shuffled is True) and if LSTM is true also a batch of sequence length. For LSTM, it is required to sort data in each mini-batch based on sequence length such that the longest sequence should be first. This is necessary as we will see when we trained LSTM for sequences with different lengths.
 
 
-# 2.3 Functions for text analysis and preformance metrics
+# 7.3 Functions for text analysis and performance metrics
 
-In `utilities.py`, there are some useful functions which will be used in analysing text and also to measure the classification performance.
-
+In `utilities.py`, there are some useful functions which will be used in analyzing text and also to measure the classification performance.
 
 ```python
 def extractVocab(content):
@@ -510,8 +525,7 @@ def wordCount(dict_vocab):
 	return words_sorted,counts_sorted
 ```
 
-`extractVocab` functions takes as argument a string and extract the words and their count of occurence in the string and returns a vocabulary dictionary where keys are words and values are the wrods count. `wordCount` is used to sort the words based on their counts given a vocabulary dictionary, it returns two lists: sorted words, and their count.
-
+`extractVocab` functions takes as argument a string and extract the words and their count of occurrence in the string and returns a vocabulary dictionary where keys are words and values are the words count. `wordCount` is used to sort the words based on their counts given a vocabulary dictionary, it returns two lists: sorted words, and their count.
 
 ```python
 def computeConfMatrix(predictions,labels):
@@ -592,11 +606,11 @@ def ROC(predictions_prob,labels):
 ```
 
 `computeConfMatrix` takes as argument predictions and groundtruth labels and it returns confusion matrix in which rows represent predicted class and columns represent the actual class.
-`performanceMetrics` takes as argument the confusion matrix and it computes several metrics for both spam and non-spam classes including: accuracy, precision, recall, f1-score, false positive rate, and true positve rate and it returns the metrics in a python dictionary.
-`ROC` takes as argument predictions probabilties (for spam class) and labels, by setting a threshold (from 0 to 1 by a step of 0.02) it computes the false and true positive rates to be used for ploting ROC curves.
+`performanceMetrics` takes as argument the confusion matrix and it computes several metrics for both spam and non-spam classes including accuracy, precision, recall, f1-score, false positive rate, and true positive rate and it returns the metrics in a python dictionary.
+`ROC` takes as argument predictions probabilities (for spam class) and labels, by setting a threshold (from 0 to 1 by a step of 0.02) it computes the false and true positive rates to be used for plotting ROC curves.
 
 
-# 2.4 LSTM Classifier
+# 7.4 LSTM Classifier
 
 
 LSTM classifier is written using PyTorch library, in `LSTM.py` first we define the LSTM network structure in `NetworkLSTM` class using `nn.Module` as parent class.
@@ -658,14 +672,14 @@ class NetworkLSTM(nn.Module):
 		return output
 ```
 
-The LSTM network include an word embedding layer and lstm cells and fully connected layer. To compute the network output:
+The LSTM network includes a word embedding layer and lstm cells and a fully connected layer. To compute the network output:
 
 
 **First:** The input data is a tensor where the rows are samples in the mini-batch and the columns are the words, as all the E-mails don't have the same number of words,
 We pick the maximum length as the number of columns. Therefore the sequences with words less than maximum length will be padded by zeros.
 
 
-**Second:** The embeding layer will take as input the samples and it outputs the vectors in embedded domain, where each dimension in this domain has a semantic meaning for the classifer,
+**Second:** The embedding layer will take as input the samples and it outputs the vectors in the embedded domain, where each dimension in this domain has semantic meaning for the classifier,
 For instance, if we want to classify which object can eat, the words 'human' and 'animal' may be projected into the same region in this embedded domain. The embedding layer will outputs a vector for each word.
 
 **Third** We don't want to train LSTM over zeros padded in the samples, `pack_padded_sequence` is used to remove those padded zeros from the samples.
@@ -674,6 +688,7 @@ For instance, if we want to classify which object can eat, the words 'human' and
 
 
 `LSTM.py` also includes `ClassifierLSTM` class as following:
+
 
 ```python
 class ClassifierLSTM(object):
@@ -728,12 +743,12 @@ class ClassifierLSTM(object):
 ```
 
 
-`ClassifierLSTM` includes methods for training and testing the network as well as methods for saving and loading the networks weights.
-`train` method iterate over our costum data loaders and compute the network outputs and the loss, then it optimizes the network weights based on a criterion (binary cross entropy) and optimization strategy (Adam).
-`predict` method computes the network outputs and spam prediction and returns them. Also, since we have shuffled the inputs and labels during data iteration, we also return labels for computing performance metrics.
+`ClassifierLSTM` includes methods for training and testing the network as well as methods for saving and loading the network's weights.
+`train` method iterate over our custom data loaders and compute the network outputs and the loss, then it optimizes the network weights based on a criterion (binary cross-entropy) and optimization strategy (Adam).
+`predict` method computes the network outputs and spam prediction and returns them. Also, since we have shuffled the inputs and labels during data iteration, we return labels for computing performance metrics.
 
 
-# 2.5 Logistic Regression
+# 7.5 Logistic Regression
 
 
 Similar to LSTM, `LogisticRegression.py` includes a class for defining the network using PyTorch library:
@@ -804,7 +819,7 @@ class ClassifierLogisticRegression(object):
 
 
 
-# 2.6 Main File
+# 7.6 Main File
 
 
 ```python
@@ -824,7 +839,7 @@ import random
 
 ```
 
-First load , import necessary libraries and functions:
+First load, import necessary libraries and functions:
 
 
 ```python
@@ -845,7 +860,7 @@ torch.backends.cudnn.deterministic = True
 #################################################################################
 
 ```
-Then, we manualy select a seed (0) for random generators in python, numpy, and torch to assure reproducible results (avoid different results on different runs due to different random intilizations)
+Then, we manually select a seed (0) for random generators in python, NumPy, and torch to assure reproducible results (avoid different results on different runs due to different random initializations)
 
 
 
@@ -891,7 +906,7 @@ else:
 	print("*"*15)
 ```
 
-Then we locate where ham and spam files are, then we select the size of our bag of words. The bag of words is used to extract features for the naive bayes, k-NN, decision tree and logistic regression classifers. Next, `EnronLoader` class is used to load and pre-process data as it is detaild in [pre-processing section](#-Pre-processing). It returns two lists of pre-processed contents form spam and ham folders and the duplicates are also removed for the contents. If we have already pre-processed the data then we just load the pickle files and if not, in the end we save the lists into two pickle files. 
+Then we locate where ham and spam files are, then we select the size of our bag of words. The bag of words is used to extract features for the naive Bayes, k-NN, decision tree, and logistic regression classifiers. Next, `EnronLoader` class is used to load and pre-process data as it is detailed in [pre-processing section](#-Pre-processing). It returns two lists of pre-processed contents form spam and ham folders and the duplicates are also removed for the contents. If we have already pre-processed the data then we just load the pickle files and if not, in the end, we save the lists into two pickle files. 
 
 ```python
 ##### Under sampling to prevent unbalanced dataset 
@@ -989,15 +1004,15 @@ plt.xticks(rotation='vertical')
 plt.show()
 ```
 
-We used word cloud library to generate plots to represent text data in which the size of each word indicates its frequency or importance:
+We used the word cloud library to generate plots to represent text data in which the size of each word indicates its frequency or importance:
 
 ![vai](readMe/wcSpam.png "WordCloud Spam")
 
 ![vai](readMe/wcHam.png "WordCloud Ham")
 
-As we can see, the words such as 'Emailaddr' or 'Number' appeared alot in both datasets as we replace every E-mail address and number with these words.
+As we can see, words such as 'Emailaddr' or 'Number' appeared a lot in both datasets as we replace every E-mail address and number with these words.
 
-We also plot the words based on their apperance count in the data:
+We also plot the words based on their appearance count in the data:
 
 ![vai](readMe/wcMostCommon.png "Most Common Words")
 
@@ -1032,8 +1047,8 @@ for i in range(BoW_size):
 #################################################################################
 ```
 
-Next, we use python sets to see how the words intersect in ham and spam files with the most common words, as we have mentioned, we don't want the words in our bag of words which are only present in one of the classes. This would cause the classifier be overfitted only on Enron datasets. 
-In the end, we print all words we have chosen in the bag of words with their corresponding count in the ham and spam data.
+Next, we use python sets to see how the words intersect in ham and spam files with the most common words, as we have mentioned, we don't want the words in our bag of words which are only present in one of the classes. This would cause the classifier to be overfitted only on Enron datasets. 
+In the end, we print all the words we have chosen in the bag of words with their corresponding count in the ham and spam data.
 
 
 
@@ -1061,7 +1076,7 @@ for (row,content) in enumerate(contentTokenized):
 
 ```
 
-Next, we perform tokenization and vectorization for the bag of words approach: first we split the contents into words then the words are assigned an integer index from a python dictionary whose keys are words and values are the indexes.
+Next, we perform tokenization and vectorization for the bag of words approach: first, we split the contents into words then the words are assigned an integer index from a python dictionary whose keys are words and values are the indexes.
 
 
 
@@ -1108,11 +1123,10 @@ plt.show()
 #################################################################################
 ```
 
-Then, we split the dataset into trianing, validation, and test sets using a ratio of 50, 25, and 25 % respectively.
-Next we plot how ham and spam classes are distributed in these datasets.
+Then, we split the dataset into training, validation, and test sets using a ratio of 50, 25, and 25 % respectively.
+Next, we plot how ham and spam classes are distributed in these datasets.
 
 ![vai](readMe/hamSpamClasses.png "Training/Validation/Test sets")
-
 
 ```python
 ########################################################################
@@ -1132,11 +1146,11 @@ FPR_NB ,TPR_NB = ROC(predoction_prob[:,1],test_label)
 
 ```
 
-First classifaction approach is naive Bayes classifier, as its name implies it uses Bayes' theorem and with the assumption that the features (in our case selected words counts) are independent.
-We used multinomial naive Bayes classifer where the probability distrution of each feature follows the multinomial distribution where we count number of words in our bag of words.
-Although it is regarded as one of the simplest classifiers, it shows relatively good classification performance for text classifiation.
+The first classification approach is naive Bayes classifier, as its name implies it uses Bayes' theorem and with the assumption that the features (in our case selected words counts) are independent.
+We used a multinomial naive Bayes classifier where the probability distribution of each feature follows the multinomial distribution where we count the number of words in our bag of words.
+Although it is regarded as one of the simplest classifiers, it shows relatively good classification performance for text classification.
 
-Same as all sklearn classifiers, first we fit the classfier on the training data then the classifier is applied over the test set. The predicted outputs and also the probabilities are then used to measure the performance metrics which will be seen in the following parts.
+Same as all sklearn classifiers, first we fit the classifier on the training data then the classifier is applied over the test set. The predicted outputs and also the probabilities are then used to measure the performance metrics which will be seen in the following parts.
 
 
 
@@ -1158,9 +1172,9 @@ FPR_DT ,TPR_DT = ROC(predoction_prob[:,1],test_label)
 
 ```
 
-Second classifer is decision tree, a decision tree construct a flow-chart structure (tree) in which each internal node assigned a test/rule on a feature, the two outgoing branches represnt the outcome of that test (true and flase) and in the end the leaf nodes determine the class of the data. During the trainig, these rules and their corresponding threshold are learned by a criterion by minimizing gini or entropy according to the representation of the tree.
+The second classifier is decision tree, a decision tree construct a flow-chart structure (tree) in which each internal node assigned a test/rule on a feature, the two outgoing branches represent the outcome of that test (true and false) and in the end the leaf nodes determine the class of the data. During the training, these rules and their corresponding threshold are learned by a criterion by minimizing Gini or entropy according to the representation of the tree.
 
-Same as all sklearn classifiers, first we fit the classfier on the training data then the classifier is applied over the test set. The predicted outputs and also the probabilities are then used to measure the performance metrics which will be seen in the following parts. Probabilities here are just the fraction of training samples of the same class in a the leaf.
+Same as all sklearn classifiers, first we fit the classifier on the training data then the classifier is applied over the test set. The predicted outputs and also the probabilities are then used to measure the performance metrics which will be seen in the following parts. Probabilities here are just the fraction of training samples of the same class in the leaf.
 
 
 
@@ -1182,7 +1196,7 @@ FPR_KN ,TPR_KN = ROC(predoction_prob[:,1],test_label)
 
 ```
 
-K-Nearest Neighbors classifier is used next. The main idea behind nearest neighbor classifer is to find a number of training samples closest in distance to the test sample point, and predict the label from these training samples usually by measuring standard Euclidean distance. This approach can be regarded as non-generalizing machine learning method, since they simply memorize all of its training data during inference. 
+K-Nearest Neighbors classifier is used next. The main idea behind the nearest neighbor classifier is to find a number of training samples closest in distance to the test sample point, and predict the label from these training samples usually by measuring standard Euclidean distance. This approach can be regarded as non-generalizing machine learning method, since they simply memorize all of its training data during inference. 
 
 Same as all sklearn classifiers, first we fit the classfier on the training data then the classifier is applied over the test set. The predicted outputs and also the probabilities are then used to measure the performance metrics which will be seen in the following parts. Probabilities here are just the fraction of nearest neighbors of the same class in k-nearest neighbors.
 
