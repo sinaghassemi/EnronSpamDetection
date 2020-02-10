@@ -195,7 +195,7 @@ In the following table, the performance metric is given over the test set for th
 | Logistic Regression 	|   97.34    	|  95.90   	|  98.91	|  97.38	|
 | LSTM 			|   98.16    	|  98.18   	|  98.15	|  98.17	|
 
-As can be seen from the results, the LSTM performs the best. It can be expected since the bag of words that are used for other methods discards the order of the words in the contents. However, LSTM can extract the dependencies between the words as the sequences are provided in an ordered manner using word embedding. Next, ROC curves for different classifiers are shown in the following plot, note that for better illustration, the plot shows the top right corner of the curves:
+As can be seen from the results, the LSTM performs the best. It can be expected since the bag of words that are used for other methods discards the order of the words in the contents. However, LSTM can extract the dependencies between the words as the sequences are provided in an ordered manner using word embedding. Next, ROC curves for different classifiers are shown in the following plot, note that for better illustration, the plot shows the top left corner of the curves:
 
 
 
