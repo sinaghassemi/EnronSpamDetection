@@ -1,6 +1,6 @@
 # Spam Detection over Enron-Spam dataset
 
-The repository contains the codes addressing spam detection over [Enron-Spam](http://www2.isprs.org/commissions/comm3/wg4/2d-sem-label-vaihingen.html) dataset. In the following, dataset, pre-processing, classification methodology, and the results are provided, in the next part, implementation details along with the provided codes are described. 
+The repository contains the codes addressing spam detection over [Enron-Spam](http://www2.isprs.org/commissions/comm3/wg4/2d-sem-label-vaihingen.html) dataset. In the following, dataset, pre-processing, classification methodology, and the results are provided. Next, implementation details along with the provided codes are described. 
 
 
 # 1. Dataset
