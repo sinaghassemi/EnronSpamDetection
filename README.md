@@ -5,23 +5,23 @@ The repository contains the codes addressing spam detection over [Enron-Spam](ht
 
 # 1. Dataset
 
-Enron-Spam dataset includes non-spam (ham) messages from six Enron employees who had large mailboxes, and also it includes spam messages from four different sources namely: the SpamAssassin corpus, the Honeypot project, the spam collection of Bruce Guenter, and spam collected by the authors of the [paper](http://www2.aueb.gr/users/ion/docs/ceas2006_paper.pdf).
+Enron-Spam dataset includes non-spam (ham) messages from six Enron employees who had large mailboxes. It also includes spam messages from four different sources namely: the SpamAssassin corpus, the Honeypot project, the spam collection of Bruce Guenter, and spam collected by the authors of the [paper](http://www2.aueb.gr/users/ion/docs/ceas2006_paper.pdf).
 
 
 
 # 2. Pre-processing
 
-In this project, spam and ham E-mails in their raw format are used, so it is required to apply several pre-processing methods over the raw data to prepare it for features selection stage where the input features to the classifier are extracted from pre-processed data. Here, the main goal is to remove the redundant data that may increase our vocabulary size. Moreover, pre-processing should assure that the classification performance is not limited to this dataset and it can be generalized to real-world applications.
+In this project, spam and ham E-mails in their raw format are used. Therefore, it is required to apply several pre-processing methods over the raw data to prepare the dataset for features selection stage where features are extracted from pre-processed data. In this stage, the main goal is to remove the redundant data that may increase our vocabulary size. Moreover, pre-processing should assure that the classification performance is not limited to this dataset and it can be generalized to real-world applications.
 
 The preprocessing can be summarized in the following list:
 
 - All letters are converted to lower case.
 
-- Only the body and the subject of the E-mail are preserved and used for classification, therefore lines that contain header information such as message-id, date, mime-version, etc are removed from the E-mail contents. 
+- Only the body and the subject of the E-mail are preserved and used for classification. Therefore, lines that contain header information such as message-id, date, mime-version, etc are removed from the E-mail contents. 
 
 - HTML/JAVA inline commands and syntax are also removed from the contents as they are not useful for spam detection.
 
-- Any date, time, number, E-mail or website address are replaced with the word 'date', 'time', 'number', 'emailaddrs' or 'webaddrs'. The logic behind this pre-processing is that the actual E-mail or website address or a number or date will not provide information for detecting spam E-mails, and even if it does, it will be limited to this dataset and will not contribute to the generalization of the classifier. For instance, if in this dataset spam contents are coming from a certain number of companies, then the classifier will be trained to detect spam based on the web address of these companies, however, in real-world applications, it might not include all types of spam. Also, using a generalized term such as 'emailaddrs' for all E-mail addresses will prevent the unnecessary increase of the vocabulary size.
+- Any date, time, number, E-mail or website address are replaced with the word 'date', 'time', 'number', 'emailaddrs' or 'webaddrs'. The logic behind this pre-processing is that the actual E-mail or website address or a number or date will not provide information for detecting spam E-mails, and even if it does, it will be limited to this dataset and will not contribute to the generalization of the classifier. For instance, if in this dataset, spam contents are coming from a certain number of companies, then the classifier will be trained to detect spam based on the web address of these companies, however, in real-world applications, it might not include all types of spam. Also, using a generalized term such as 'emailaddrs' for all E-mail addresses will prevent the unnecessary increase of the vocabulary size.
 
 - The punctuation marks are removed from the contents.
  
